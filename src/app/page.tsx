@@ -1,5 +1,5 @@
 import { getDbConnection } from '@/lib/db';
-import { PlayCircle, Video, TrendingUp, Bell, Sparkles, Folder } from 'lucide-react';
+import { PlayCircle, Video, TrendingUp, Bell, Sparkles, Folder, Compass } from 'lucide-react';
 import Link from 'next/link';
 
 // Componente para evitar erros de renderização em datas se houver problemas de timezone
