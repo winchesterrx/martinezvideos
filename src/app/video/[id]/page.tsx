@@ -97,6 +97,20 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
               allowFullScreen
             ></iframe>
+          ) : video.url_video && video.url_video.includes('drive.google.com') ? (
+            <iframe 
+              src={video.url_video.replace('/view', '/preview').replace('?usp=sharing', '')} 
+              className="w-full h-full absolute inset-0"
+              allow="autoplay"
+              allowFullScreen
+            ></iframe>
+          ) : video.url_video ? (
+            <video 
+              src={video.url_video} 
+              className="w-full h-full object-contain"
+              controls 
+              autoPlay
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-500">
               Vídeo não disponível
