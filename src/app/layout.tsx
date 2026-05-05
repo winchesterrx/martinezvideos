@@ -20,7 +20,8 @@ export default async function RootLayout({
   
   let setores = [];
   if (session) {
-    const { pool } = await import("@/lib/db");
+    const { getDbConnection } = await import("@/lib/db");
+    const pool = await getDbConnection();
     const [rows] = await pool.query('SELECT id, nome FROM setores WHERE ativo = "S" ORDER BY nome ASC');
     setores = rows as any[];
   }
