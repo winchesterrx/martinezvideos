@@ -63,10 +63,10 @@ export default async function LivePage() {
       {/* Main Content Area: YouTube Style Layout */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
         
-        {/* Lado Esquerdo: Player + Info (Padrão YouTube) */}
+        {/* Lado Esquerdo: Player + Info */}
         <div className="lg:col-span-3 flex flex-col">
-          <div className="relative group aspect-video">
-            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000" />
+          <div className="relative aspect-video">
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-indigo-600 rounded-3xl blur opacity-20 transition duration-1000" />
             <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10">
               {videoId ? (
                 <iframe 
@@ -84,42 +84,43 @@ export default async function LivePage() {
               )}
             </div>
           </div>
-
-          {/* Área de Ações e Stats (Abaixo do Vídeo) */}
-          {videoId && <LiveActions videoId={videoId} youtubeStats={youtubeStats} />}
-
-          {/* Descrição e Letreiro */}
-          <div className="mt-6 space-y-6">
-             {live.subtexto && (
-                <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 py-4 rounded-2xl overflow-hidden shadow-lg border-l-4 border-l-orange-500">
-                  <div className="animate-marquee flex items-center gap-20">
-                    <span className="text-orange-400 font-black text-sm uppercase flex items-center gap-2 shrink-0">
-                      <Info size={16} /> {live.subtexto}
-                    </span>
-                    <span className="text-slate-600">|</span>
-                    <span className="text-orange-400 font-black text-sm uppercase shrink-0">{live.subtexto}</span>
-                  </div>
-                </div>
-             )}
-             
-             <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
-                <h3 className="text-white font-black text-sm mb-3 flex items-center gap-2">
-                  <Info size={16} className="text-orange-500" /> Detalhes da Transmissão
-                </h3>
-                <p className="text-slate-400 text-sm leading-relaxed">
-                  {live.descricao || 'Sintonize nesta aula de alta performance. Conteúdo exclusivo Martinez.'}
-                </p>
-             </div>
-          </div>
         </div>
 
-        {/* Lado Direito: Chat (Fixado na lateral) */}
-        <div className="lg:col-span-1 relative min-h-[500px]">
-          <div className="absolute inset-0 flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl">
+        {/* Lado Direito: Chat (Exatamente na altura do vídeo) */}
+        <div className="lg:col-span-1 relative">
+           <div className="absolute inset-0 flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl">
              {videoId && <MartinezChat videoId={videoId} />}
-          </div>
+           </div>
         </div>
+      </div>
 
+      {/* Área de Ações e Stats (Abaixo da Grid Principal) */}
+      <div className="relative z-10 lg:w-[75%] -mt-4">
+        {videoId && <LiveActions videoId={videoId} youtubeStats={youtubeStats} />}
+      </div>
+
+      {/* Descrição e Letreiro */}
+      <div className="relative z-10 lg:w-[75%] space-y-6">
+         {live.subtexto && (
+            <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 py-4 rounded-2xl overflow-hidden shadow-lg border-l-4 border-l-orange-500">
+              <div className="animate-marquee flex items-center gap-20">
+                <span className="text-orange-400 font-black text-sm uppercase flex items-center gap-2 shrink-0">
+                  <Info size={16} /> {live.subtexto}
+                </span>
+                <span className="text-slate-600">|</span>
+                <span className="text-orange-400 font-black text-sm uppercase shrink-0">{live.subtexto}</span>
+              </div>
+            </div>
+         )}
+         
+         <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
+            <h3 className="text-white font-black text-sm mb-3 flex items-center gap-2">
+              <Info size={16} className="text-orange-500" /> Detalhes da Transmissão
+            </h3>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              {live.descricao || 'Sintonize nesta aula de alta performance. Conteúdo exclusivo Martinez.'}
+            </p>
+         </div>
       </div>
 
     </div>
