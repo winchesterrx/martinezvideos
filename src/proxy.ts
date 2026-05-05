@@ -4,7 +4,7 @@ import { getSession } from '@/lib/auth';
 
 const publicRoutes = ['/login', '/api/auth/login'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   if (publicRoutes.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/favicon.ico')) {
