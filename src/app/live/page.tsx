@@ -87,9 +87,9 @@ export default async function LivePage() {
           </div>
         </div>
 
-        {/* Lado Direito: Native Chat (Matching Player Height) */}
-        <div className="lg:col-span-1 min-h-[400px]">
-          <div className="h-full max-h-[calc(100vw*0.75*0.25)] lg:max-h-full rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl flex flex-col">
+        {/* Lado Direito: Native Chat (Forçado a seguir a altura do Player) */}
+        <div className="lg:col-span-1 relative min-h-[400px]">
+          <div className="absolute inset-0 flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl">
              {videoId && <MartinezChat videoId={videoId} />}
           </div>
         </div>
