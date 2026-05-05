@@ -1,16 +1,18 @@
 import { getDbConnection } from '@/lib/db';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Layers, ChevronRight, Video } from 'lucide-react';
+import Link from 'next/link';
+import { FolderOpen, ArrowLeft, Layers, Video } from 'lucide-react';
 
 async function getSistemaData(id: string) {
   const pool = await getDbConnection();
   
+  // Buscar o setor atual
   const [setores] = await pool.query('SELECT * FROM setores WHERE id = ?', [id]);
   const setor = (setores as any[])[0];
   
   if (!setor) return null;
 
+  // Buscar os módulos deste setor com a contagem de vídeos
   const [modulos] = await pool.query(`
     SELECT m.*, COUNT(v.id) as total_videos 
     FROM modulos m
@@ -26,8 +28,9 @@ async function getSistemaData(id: string) {
   };
 }
 
-export default async function SistemaPage({ params }: { params: { id: string } }) {
-  const data = await getSistemaData(params.id);
+export default async function SistemaPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const data = await getSistemaData(id);
   
   if (!data) {
     notFound();
@@ -36,70 +39,70 @@ export default async function SistemaPage({ params }: { params: { id: string } }
   const { setor, modulos } = data;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
-      {/* Breadcrumb & Header */}
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="flex items-center gap-2 text-sm text-slate-400 font-medium">
-          <Link href="/" className="hover:text-white transition-colors">Início</Link>
-          <ChevronRight size={16} />
-          <span className="text-orange-500">Sistemas</span>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 border border-white/10">
-            <Layers className="text-white" size={32} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-white">
-              Sistema {setor.nome}
-            </h1>
-            <p className="text-slate-400 mt-1">Selecione um módulo para ver as aulas.</p>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-white relative">
+      {/* Background Mask */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-fixed bg-center opacity-5 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-950 to-slate-950 pointer-events-none z-0" />
 
-      {/* Grid de Módulos */}
-      {modulos.length === 0 ? (
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center text-slate-400">
-          Nenhum módulo encontrado neste sistema.
+      <div className="relative z-10 px-4 md:px-8 py-8 max-w-7xl mx-auto">
+        
+        {/* Breadcrumb / Header */}
+        <div className="mb-10">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-orange-500 transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para o Início
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center shadow-lg shadow-orange-500/20">
+              <Layers className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h4 className="text-orange-500 font-bold tracking-widest text-sm uppercase mb-1">Sistema</h4>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-white">{setor.nome}</h1>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modulos.map((modulo) => (
-            <Link 
-              href={`/modulo/${modulo.id}`} 
-              key={modulo.id} 
-              className="group bg-slate-900/40 border border-white/5 rounded-2xl p-6 hover:bg-slate-800/60 hover:border-indigo-500/30 transition-all duration-300 shadow-lg relative overflow-hidden"
-            >
-              {/* Highlight gradient on hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-4">
-                  <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-inner"
-                    style={{ backgroundColor: modulo.cor ? `${modulo.cor}20` : '#4f46e520', color: modulo.cor || '#818cf8' }}
-                  >
-                    <Layers size={24} />
-                  </div>
-                  <div className="flex items-center gap-1 bg-white/5 px-3 py-1 rounded-full text-xs font-medium text-slate-300">
-                    <Video size={14} /> {modulo.total_videos} aulas
-                  </div>
+
+        {/* Módulos (Subpastas) */}
+        <div className="mb-8 flex items-center gap-3">
+          <FolderOpen className="w-6 h-6 text-slate-400" />
+          <h2 className="text-2xl font-bold text-white">Módulos Disponíveis</h2>
+        </div>
+
+        {modulos.length === 0 ? (
+          <div className="bg-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-12 text-center">
+            <FolderOpen className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-slate-300 mb-2">Nenhum módulo encontrado</h3>
+            <p className="text-slate-500">Ainda não existem módulos cadastrados para este sistema.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {modulos.map((modulo) => (
+              <Link 
+                key={modulo.id} 
+                href={`/modulo/${modulo.id}`}
+                className="group relative bg-slate-900/60 backdrop-blur-sm border border-white/5 rounded-2xl p-6 hover:bg-slate-800 hover:border-orange-500/40 transition-all shadow-lg hover:shadow-orange-500/10 flex flex-col items-start"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <FolderOpen className="w-24 h-24 text-slate-400" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">
-                  {modulo.nome}
-                </h3>
-                {modulo.descricao && (
-                  <p className="text-sm text-slate-400 line-clamp-2">
-                    {modulo.descricao}
-                  </p>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center mb-6 group-hover:bg-orange-500 group-hover:text-white text-slate-400 transition-colors z-10">
+                  <FolderOpen className="w-6 h-6" />
+                </div>
+                
+                <h3 className="text-xl font-bold text-white mb-2 z-10">{modulo.nome}</h3>
+                
+                <div className="mt-auto flex items-center gap-2 text-sm text-slate-400 z-10 bg-slate-950/50 px-3 py-1.5 rounded-lg border border-white/5 group-hover:border-orange-500/20">
+                  <Video className="w-4 h-4 text-orange-500" />
+                  <span>{modulo.total_videos} {modulo.total_videos === 1 ? 'Aula' : 'Aulas'}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

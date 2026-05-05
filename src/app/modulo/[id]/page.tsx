@@ -1,34 +1,31 @@
 import { getDbConnection } from '@/lib/db';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Layers, ChevronRight, Play, Eye, Route } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Video, FolderOpen, PlayCircle, Clock } from 'lucide-react';
 
 async function getModuloData(id: string) {
   const pool = await getDbConnection();
   
+  // Buscar o módulo atual
   const [modulos] = await pool.query(`
     SELECT m.*, s.nome as setor_nome, s.id as setor_id 
-    FROM modulos m 
-    LEFT JOIN setores s ON m.setor_id = s.id 
-    WHERE m.id = ?
+    FROM modulos m
+    JOIN setores s ON m.setor_id = s.id
+    WHERE m.id = ? AND m.ativo = 'S'
   `, [id]);
-  const modulo = (modulos as any[])[0];
   
+  const modulo = (modulos as any[])[0];
   if (!modulo) return null;
 
-  const [videos] = await pool.query(`
-    SELECT v.*, seq.titulo as sequencia_titulo
-    FROM videos v
-    LEFT JOIN sequencias seq ON v.sequencia_id = seq.id
-    WHERE v.modulo_id = ?
-    ORDER BY v.is_sequencia DESC, v.sequencia_id ASC, v.sequencia_ordem ASC, v.data_upload DESC
-  `, [id]);
+  // Buscar todos os vídeos deste módulo
+  const [videosData] = await pool.query('SELECT * FROM videos WHERE modulo_id = ? ORDER BY id DESC', [id]);
+  const videos = videosData as any[];
 
-  // Group videos by sequencia_id, and standalone videos
-  const sequencias: Record<string, any> = {};
+  // Separar em Sequências vs Avulsos
+  const sequencias: Record<string, { titulo: string; videos: any[] }> = {};
   const avulsos: any[] = [];
 
-  for (const v of videos as any[]) {
+  videos.forEach((v) => {
     if (v.is_sequencia && v.sequencia_id) {
       if (!sequencias[v.sequencia_id]) {
         sequencias[v.sequencia_id] = {
@@ -40,124 +37,137 @@ async function getModuloData(id: string) {
     } else {
       avulsos.push(v);
     }
-  }
+  });
 
-  return { 
-    modulo, 
-    sequencias,
-    avulsos
-  };
+  // Ordenar vídeos dentro das sequências pela coluna sequencia_ordem
+  Object.values(sequencias).forEach(seq => {
+    seq.videos.sort((a, b) => (a.sequencia_ordem || 0) - (b.sequencia_ordem || 0));
+  });
+
+  return { modulo, sequencias, avulsos };
 }
 
-export default async function ModuloPage({ params }: { params: { id: string } }) {
-  const data = await getModuloData(params.id);
+export default async function ModuloPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const data = await getModuloData(id);
   
   if (!data) {
     notFound();
   }
 
   const { modulo, sequencias, avulsos } = data;
-
-  const renderVideoCard = (video: any, index?: number) => (
-    <Link href={`/video/${video.id}`} key={video.id} className="group flex flex-col bg-slate-900/40 border border-white/5 rounded-2xl overflow-hidden hover:bg-slate-800/60 hover:border-orange-500/30 transition-all duration-300 shadow-lg">
-      <div className="relative aspect-video bg-slate-800 w-full overflow-hidden">
-        {video.poster_url ? (
-          <img src={video.poster_url} alt={video.titulo} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
-            <Play size={48} className="opacity-30 group-hover:scale-110 group-hover:opacity-60 transition-all" />
-          </div>
-        )}
-        
-        {index !== undefined && (
-          <div className="absolute top-3 left-3 bg-indigo-600 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg">
-            Aula {index + 1}
-          </div>
-        )}
-        
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-          <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/50">
-            <Play className="text-white ml-1" fill="currentColor" size={20} />
-          </div>
-        </div>
-      </div>
-      <div className="p-4 flex-1 flex flex-col justify-between">
-        <h3 className="text-white font-semibold line-clamp-2 leading-tight group-hover:text-orange-400 transition-colors">
-          {video.titulo}
-        </h3>
-        <div className="flex items-center justify-between mt-4 text-xs text-slate-500">
-          <span className="flex items-center gap-1"><Eye size={14} /> {video.visualizacoes || 0}</span>
-          <span>{new Date(video.data_upload).toLocaleDateString('pt-BR')}</span>
-        </div>
-      </div>
-    </Link>
-  );
+  const temConteudo = Object.keys(sequencias).length > 0 || avulsos.length > 0;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-12">
-      {/* Breadcrumb & Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 text-sm text-slate-400 font-medium">
-          <Link href="/" className="hover:text-white transition-colors">Início</Link>
-          <ChevronRight size={16} />
-          <Link href={`/sistema/${modulo.setor_id}`} className="hover:text-white transition-colors">{modulo.setor_nome}</Link>
-          <ChevronRight size={16} />
-          <span className="text-orange-500">{modulo.nome}</span>
-        </div>
+    <div className="min-h-screen bg-slate-950 text-white relative">
+      {/* Background Mask */}
+      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-fixed bg-center opacity-5 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-950 to-slate-950 pointer-events-none z-0" />
+
+      <div className="relative z-10 px-4 md:px-8 py-8 max-w-7xl mx-auto">
         
-        <div className="flex items-center gap-4">
-          <div 
-            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 border border-white/10"
-            style={{ backgroundColor: modulo.cor ? `${modulo.cor}20` : '#4f46e520', color: modulo.cor || '#818cf8' }}
-          >
-            <Layers size={32} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-white">
-              {modulo.nome}
-            </h1>
-            <p className="text-slate-400 mt-1">{modulo.descricao || 'Módulo de treinamento'}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Sequências (Trilhas) */}
-      {Object.values(sequencias).length > 0 && (
-        <div className="space-y-10">
-          {Object.values(sequencias).map((seq: any, i) => (
-            <div key={i} className="bg-slate-900/30 border border-white/5 rounded-3xl p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <Route className="text-indigo-500" size={24} />
-                <h2 className="text-2xl font-bold text-white">
-                  Trilha: {seq.titulo}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative">
-                {/* Linha de conexão visual da trilha (apenas Desktop) */}
-                <div className="hidden lg:block absolute top-[40%] left-0 w-full h-0.5 bg-indigo-500/20 -z-10" />
-                
-                {seq.videos.map((video: any, index: number) => renderVideoCard(video, index))}
-              </div>
+        {/* Breadcrumb / Header */}
+        <div className="mb-10">
+          <Link href={`/sistema/${modulo.setor_id}`} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-orange-500 transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para {modulo.setor_nome}
+          </Link>
+          
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-slate-800 border border-orange-500/30 flex items-center justify-center shadow-lg">
+              <FolderOpen className="w-8 h-8 text-orange-500" />
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Vídeos Avulsos */}
-      {avulsos.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-6">Outros Vídeos do Módulo</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {avulsos.map((video: any) => renderVideoCard(video))}
+            <div>
+              <h4 className="text-orange-500 font-bold tracking-widest text-sm uppercase mb-1">Módulo</h4>
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white">{modulo.nome}</h1>
+            </div>
           </div>
         </div>
-      )}
 
-      {Object.values(sequencias).length === 0 && avulsos.length === 0 && (
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-12 text-center text-slate-400">
-          Nenhum vídeo publicado neste módulo ainda.
-        </div>
-      )}
+        {!temConteudo ? (
+          <div className="bg-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-12 text-center">
+            <Video className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-slate-300 mb-2">Nenhum conteúdo encontrado</h3>
+            <p className="text-slate-500">Este módulo ainda não possui trilhas ou vídeos disponíveis.</p>
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {/* TRILHAS / SEQUÊNCIAS */}
+            {Object.entries(sequencias).map(([seqId, seq]) => (
+              <section key={seqId}>
+                <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+                  <PlayCircle className="w-6 h-6 text-orange-500" />
+                  <h2 className="text-2xl font-bold text-white">{seq.titulo}</h2>
+                  <span className="ml-auto text-xs font-semibold bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/20">
+                    Trilha
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {seq.videos.map((video, index) => (
+                    <Link key={video.id} href={`/video/${video.id}`} className="group relative bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-orange-500/30 transition-all shadow-md hover:shadow-orange-500/10 block">
+                      <div className="aspect-video bg-slate-800 relative overflow-hidden">
+                        {video.url_video && video.url_video.includes('youtube') ? (
+                          <img src={`https://img.youtube.com/vi/${video.url_video.split('v=')[1]}/mqdefault.jpg`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={video.titulo} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-800 group-hover:scale-105 transition-transform duration-500">
+                            <Video className="w-8 h-8 text-slate-600" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                           <PlayCircle className="w-12 h-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-all drop-shadow-lg" />
+                        </div>
+                        {/* Indicador de Ordem na Trilha */}
+                        <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-md border border-white/10">
+                          Aula {index + 1}
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-sm font-bold text-slate-200 line-clamp-2 group-hover:text-orange-400 transition-colors">{video.titulo}</h3>
+                        <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
+                          <Clock className="w-3 h-3" />
+                          {video.visualizacoes || 0} visualizações
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            {/* VÍDEOS AVULSOS */}
+            {avulsos.length > 0 && (
+              <section>
+                <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
+                  <Video className="w-6 h-6 text-slate-400" />
+                  <h2 className="text-2xl font-bold text-white">Conteúdos Extras</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {avulsos.map((video) => (
+                    <Link key={video.id} href={`/video/${video.id}`} className="group relative bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-slate-500/50 transition-all shadow-md block">
+                      <div className="aspect-video bg-slate-800 relative overflow-hidden">
+                        {video.url_video && video.url_video.includes('youtube') ? (
+                          <img src={`https://img.youtube.com/vi/${video.url_video.split('v=')[1]}/mqdefault.jpg`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100" alt={video.titulo} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-800 group-hover:scale-105 transition-transform duration-500">
+                            <Video className="w-8 h-8 text-slate-600" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors" />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-sm font-semibold text-slate-300 line-clamp-2 group-hover:text-white transition-colors">{video.titulo}</h3>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+          </div>
+        )}
+      </div>
     </div>
   );
 }

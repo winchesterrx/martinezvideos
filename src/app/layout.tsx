@@ -6,6 +6,8 @@ import { getSession } from "@/lib/auth";
 
 const inter = Inter({ subsets: ["latin"] });
 
+import ClientLayout from "@/components/ClientLayout";
+
 export const metadata: Metadata = {
   title: "Martinez Videos - Premium Learning",
   description: "Plataforma de ensino inteligente e premium.",
@@ -30,12 +32,9 @@ export default async function RootLayout({
     <html lang="pt-BR" className="dark">
       <body className={`${inter.className} bg-slate-950 text-slate-200 antialiased min-h-screen`}>
         {session ? (
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar user={session} setores={setores} />
-            <main className="flex-1 overflow-y-auto relative z-0 md:pt-0 pt-16">
-              {children}
-            </main>
-          </div>
+          <ClientLayout user={session} setores={setores}>
+            {children}
+          </ClientLayout>
         ) : (
           <main>{children}</main>
         )}
