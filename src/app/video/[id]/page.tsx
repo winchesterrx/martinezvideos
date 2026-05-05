@@ -135,10 +135,9 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
 
       {/* Sidebar Lateral (Abas de Trilha e IA) */}
       <VideoSidebarTabs 
-        videoId={id}
+        video={video}
         trilha={trilha}
         sequencia_titulo={sequencia_titulo}
-        sugestoes={sugestoes}
       />
     </div>
   );

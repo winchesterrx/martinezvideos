@@ -15,7 +15,7 @@ export default function AIChatClient({ videoContext }: { videoContext: any }) {
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Olá! Sou o seu Tutor Virtual. Ficou com alguma dúvida sobre a aula "${videoContext.titulo}"? Me pergunte!`
+      content: `Olá! Sou o seu Tutor Virtual. Ficou com alguma dúvida sobre a aula "${videoContext?.titulo || 'atual'}"? Me pergunte!`
     }
   ]);
   const [input, setInput] = useState('');
