@@ -76,46 +76,19 @@ export default function MartinezChat({ videoId }: { videoId: string }) {
   return (
     <div className="flex flex-col h-full bg-slate-900/10">
       
-      {/* Header com Stats em Tempo Real */}
+      {/* Header Compacto */}
       <div className="p-4 border-b border-white/5 bg-slate-900/60 backdrop-blur-md shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-orange-500 rounded-lg shadow-lg shadow-orange-500/20">
-              <MessageSquare size={16} className="text-white" />
-            </div>
-            <div>
-              <h2 className="text-[11px] font-black text-white uppercase tracking-wider">Chat Martinez</h2>
-              <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-bold uppercase">
-                <div className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse" /> 
-                {stats?.isLive ? 'Conectado Ao Vivo' : 'Histórico'}
-              </div>
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 bg-orange-500 rounded-lg shadow-lg shadow-orange-500/20">
+            <MessageSquare size={16} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-[11px] font-black text-white uppercase tracking-wider">Chat da Comunidade</h2>
+            <div className="flex items-center gap-1.5 text-[9px] text-emerald-400 font-bold uppercase">
+              <div className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse" /> 
+              Sinal Ativo
             </div>
           </div>
-        </div>
-
-        {/* Stats Grid Compacto */}
-        <div className="grid grid-cols-3 gap-1.5">
-           <div className="bg-white/5 border border-white/5 rounded-lg p-1.5 text-center">
-              <div className="flex items-center justify-center gap-1 text-slate-500 mb-0.5">
-                <Eye size={10} />
-                <span className="text-[8px] font-bold uppercase">Views</span>
-              </div>
-              <div className="text-[11px] font-black text-white">{stats?.views ? Number(stats.views).toLocaleString() : '---'}</div>
-           </div>
-           <div className="bg-white/5 border border-white/5 rounded-lg p-1.5 text-center">
-              <div className="flex items-center justify-center gap-1 text-slate-500 mb-0.5">
-                <ThumbsUp size={10} />
-                <span className="text-[8px] font-bold uppercase">Likes</span>
-              </div>
-              <div className="text-[11px] font-black text-white">{stats?.likes ? Number(stats.likes).toLocaleString() : '---'}</div>
-           </div>
-           <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-1.5 text-center">
-              <div className="flex items-center justify-center gap-1 text-orange-500 mb-0.5">
-                <Users size={10} />
-                <span className="text-[8px] font-bold uppercase">Status</span>
-              </div>
-              <div className="text-[11px] font-black text-white">{stats?.isLive ? 'ON' : 'OFF'}</div>
-           </div>
         </div>
       </div>
 
