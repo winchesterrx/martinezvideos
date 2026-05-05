@@ -33,117 +33,106 @@ export default async function LivePage() {
   };
 
   const videoId = getVideoId(live.url);
-  const headerList = await headers();
-  const domain = headerList.get('host')?.split(':')[0] || 'localhost';
 
   return (
-    <div className="relative min-h-screen bg-slate-950 flex flex-col lg:flex-row overflow-hidden">
+    <div className="relative min-h-screen bg-slate-950 flex flex-col overflow-hidden p-6 lg:p-10 gap-8">
       
-      {/* Background Mask - Estilo Netflix */}
+      {/* Background Mask */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-slate-950 to-indigo-500/5" />
-        {videoId && (
-          <div 
-            className="absolute inset-0 bg-cover bg-center opacity-10 blur-3xl scale-110"
-            style={{ backgroundImage: `url('https://img.youtube.com/vi/${videoId}/maxresdefault.jpg')` }}
-          />
-        )}
       </div>
 
-      {/* Conteúdo Principal */}
-      <div className="relative z-10 flex-1 flex flex-col min-w-0 p-4 lg:p-8">
+      {/* Header Martinez */}
+      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/" className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all backdrop-blur-md border border-white/10">
+            <ArrowLeft size={20} />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500 rounded-md text-[10px] font-black text-white uppercase tracking-tighter">
+                LIVE
+              </span>
+              <span className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">Masterclass Martinez</span>
+            </div>
+            <h1 className="text-xl md:text-3xl font-black text-white leading-none">{live.titulo}</h1>
+          </div>
+        </div>
+        <LiveActions liveTitle={live.titulo} />
+      </div>
+
+      {/* Main Content Area: Player & Chat Symmetrically Aligned */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        {/* Top Header Live */}
-        <div className="flex items-center justify-between mb-6 px-2">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-all backdrop-blur-md border border-white/10">
-              <ArrowLeft size={20} />
-            </Link>
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500 rounded-md text-[10px] font-black text-white uppercase tracking-tighter animate-pulse">
-                  <div className="w-1.5 h-1.5 bg-white rounded-full" /> LIVE
-                </span>
-                <span className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">Masterclass Martinez</span>
-              </div>
-              <h1 className="text-xl md:text-2xl font-black text-white leading-none">{live.titulo}</h1>
+        {/* Lado Esquerdo: Player */}
+        <div className="lg:col-span-3 flex flex-col">
+          <div className="relative group aspect-video">
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000" />
+            <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+              {videoId ? (
+                <iframe 
+                  className="w-full h-full absolute inset-0"
+                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+                  title="Live Stream" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 gap-4">
+                  <Radio size={64} className="opacity-20 animate-pulse" />
+                  <p>Sinal indisponível</p>
+                </div>
+              )}
             </div>
           </div>
-          <LiveActions liveTitle={live.titulo} />
         </div>
 
-        {/* Player Box */}
-        <div className="relative group">
-          {/* Glowing frame */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-indigo-600 rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000" />
-          
-          <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10">
-            {videoId ? (
-              <iframe 
-                className="w-full h-full absolute inset-0"
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
-                title="Live Stream" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowFullScreen
-              ></iframe>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-slate-600 gap-4">
-                <Radio size={64} className="opacity-20 animate-pulse" />
-                <p className="font-medium">O sinal está oscilando. Tente atualizar.</p>
-              </div>
-            )}
+        {/* Lado Direito: Native Chat (Matching Player Height) */}
+        <div className="lg:col-span-1 min-h-[400px]">
+          <div className="h-full max-h-[calc(100vw*0.75*0.25)] lg:max-h-full rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl flex flex-col">
+             {videoId && <MartinezChat videoId={videoId} />}
           </div>
         </div>
 
-        {/* Letreiro Premium (Marquee) */}
+      </div>
+
+      {/* Bottom Area: Marquee and Info */}
+      <div className="relative z-10 space-y-6">
+        
+        {/* Marquee Premium */}
         {live.subtexto && (
-          <div className="mt-8 bg-slate-900/40 backdrop-blur-md border border-white/5 py-4 rounded-2xl overflow-hidden shadow-lg">
+          <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 py-4 rounded-2xl overflow-hidden shadow-lg border-l-4 border-l-orange-500">
             <div className="animate-marquee flex items-center gap-20">
-              <span className="text-orange-400 font-black text-sm flex items-center gap-2">
-                <Info size={16} className="text-orange-500" />
-                {live.subtexto.toUpperCase()}
+              <span className="text-orange-400 font-black text-sm uppercase flex items-center gap-2 shrink-0">
+                <Info size={16} /> {live.subtexto}
               </span>
-              <span className="text-slate-400 font-bold text-sm">|</span>
-              <span className="text-orange-400 font-black text-sm uppercase">{live.subtexto}</span>
-              <span className="text-slate-400 font-bold text-sm">|</span>
-              <span className="text-orange-400 font-black text-sm uppercase">{live.subtexto}</span>
+              <span className="text-slate-600">|</span>
+              <span className="text-orange-400 font-black text-sm uppercase shrink-0">{live.subtexto}</span>
+              <span className="text-slate-600">|</span>
+              <span className="text-orange-400 font-black text-sm uppercase shrink-0">{live.subtexto}</span>
             </div>
           </div>
         )}
 
-        {/* Detalhes Técnicos */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-xl">
-              <h3 className="text-white font-black text-lg mb-4 flex items-center gap-2">
-                <Info size={20} className="text-orange-500" /> Sobre esta Transmissão
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
+              <h3 className="text-white font-black text-sm mb-2 flex items-center gap-2">
+                <Info size={16} className="text-orange-500" /> Sobre a Aula
               </h3>
-              <p className="text-slate-400 text-sm leading-relaxed font-medium">
-                {live.descricao || 'Sintonize nesta aula ao vivo de alta performance. Conteúdo exclusivo para o ecossistema Martinez.'}
+              <p className="text-slate-400 text-xs leading-relaxed">
+                {live.descricao || 'Conteúdo exclusivo Martinez. Explore todos os detalhes desta transmissão.'}
               </p>
            </div>
-           <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-xl flex items-center justify-center">
-              <div className="text-center">
-                 <div className="flex items-center justify-center gap-3 text-orange-500 mb-2">
-                    <Users size={32} />
-                    <span className="text-4xl font-black text-white tracking-tighter">AO VIVO</span>
-                 </div>
-                 <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Interaja no Chat ao lado →</p>
+           <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl flex items-center justify-center text-center">
+              <div>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Status da Comunidade</p>
+                <div className="flex items-center gap-2 text-orange-500 font-black text-xl">
+                  <Users size={20} />
+                  <span>INTERATIVIDADE ATIVA</span>
+                </div>
               </div>
            </div>
         </div>
-
-      </div>
-
-      {/* Barra Lateral: Martinez Native Chat */}
-      <div className="relative z-20 w-full lg:w-[420px] xl:w-[480px] h-[600px] lg:h-screen shrink-0 overflow-hidden">
-        {videoId ? (
-          <MartinezChat videoId={videoId} />
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-700 bg-slate-950">
-            <MessageSquare size={48} className="mb-4 opacity-10" />
-            <p className="text-sm font-bold uppercase tracking-widest opacity-30">Aguardando sinal...</p>
-          </div>
-        )}
       </div>
 
     </div>

@@ -74,10 +74,10 @@ export default function MartinezChat({ videoId }: { videoId: string }) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-950/50 backdrop-blur-3xl border-l border-white/5 shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
+    <div className="flex flex-col h-full bg-slate-900/10">
       
       {/* Header com Stats em Tempo Real */}
-      <div className="p-6 border-b border-white/10 bg-slate-900/40">
+      <div className="p-5 border-b border-white/5 bg-slate-900/60 backdrop-blur-md">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-500 rounded-lg shadow-lg shadow-orange-500/20">
@@ -122,7 +122,8 @@ export default function MartinezChat({ videoId }: { videoId: string }) {
       {/* Área de Mensagens */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"
+        className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar min-h-0"
+        style={{ scrollBehavior: 'smooth' }}
       >
         {messages.length > 0 ? (
           messages.map((m) => (
