@@ -68,9 +68,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
 
   const { video, trilha, sequencia_titulo, sugestoes, comentarios, hasLiked } = data;
 
-  // Increment view (in background)
-  const pool = await getDbConnection();
-  pool.query('UPDATE videos SET visualizacoes = visualizacoes + 1 WHERE id = ?', [id]).catch(() => {});
+
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-950">

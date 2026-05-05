@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, MessageSquare, Share2, Send } from 'lucide-react';
 
 export default function VideoInteractions({ 
@@ -21,6 +21,23 @@ export default function VideoInteractions({
   const [comments, setComments] = useState(initialComments);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Lógica de Visualização (5 segundos)
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        await fetch('/api/video/view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoId }),
+        });
+      } catch (e) {
+        console.error('Falha ao registrar view:', e);
+      }
+    }, 5000); // 5 segundos como solicitado
+
+    return () => clearTimeout(timer);
+  }, [videoId]);
 
   const handleLike = async () => {
     if (isLiking) return;
