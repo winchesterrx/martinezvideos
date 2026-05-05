@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Sidebar({ user }: { user: any }) {
+export default function Sidebar({ user, setores }: { user: any, setores?: any[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
@@ -115,6 +115,27 @@ export default function Sidebar({ user }: { user: any }) {
               </Link>
             );
           })}
+
+          {setores && setores.length > 0 && (
+            <div className="pt-4 mt-4 border-t border-white/5">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 mb-2 block">
+                Meus Sistemas
+              </span>
+              {setores.map((setor) => (
+                <Link
+                  key={setor.id}
+                  href={`/sistema/${setor.id}`}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-slate-400 hover:bg-white/5 hover:text-slate-200 ${
+                    pathname.startsWith(`/sistema/${setor.id}`) ? 'text-orange-500 bg-white/5' : ''
+                  }`}
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-orange-500 transition-colors" />
+                  <span className="text-sm truncate">{setor.nome}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </nav>
 
         {/* Footer Actions */}

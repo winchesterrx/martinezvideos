@@ -17,13 +17,20 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getSession();
+  
+  let setores = [];
+  if (session) {
+    const { pool } = await import("@/lib/db");
+    const [rows] = await pool.query('SELECT id, nome FROM setores WHERE ativo = "S" ORDER BY nome ASC');
+    setores = rows as any[];
+  }
 
   return (
     <html lang="pt-BR" className="dark">
       <body className={`${inter.className} bg-slate-950 text-slate-200 antialiased min-h-screen`}>
         {session ? (
           <div className="flex h-screen overflow-hidden">
-            <Sidebar user={session} />
+            <Sidebar user={session} setores={setores} />
             <main className="flex-1 overflow-y-auto relative z-0 md:pt-0 pt-16">
               {children}
             </main>
