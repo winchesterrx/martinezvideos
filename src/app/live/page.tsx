@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, MessageSquare, Radio, Users, Share2, Info, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { headers } from 'next/headers';
+import YouTubeChat from './YouTubeChat';
 
 export default async function LivePage() {
   const pool = await getDbConnection();
@@ -141,35 +142,14 @@ export default async function LivePage() {
 
       {/* Barra Lateral: Chat do YouTube Premium */}
       <div className="relative z-20 w-full lg:w-[420px] xl:w-[480px] h-[600px] lg:h-screen bg-slate-950/80 backdrop-blur-3xl border-l border-white/5 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
-        
-        <div className="p-6 border-b border-white/10 flex items-center justify-between bg-slate-900/40">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500 rounded-lg shadow-lg shadow-orange-500/20">
-              <MessageSquare size={20} className="text-white" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black text-white uppercase tracking-wider">Chat da Comunidade</h2>
-              <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-bold">
-                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> SINAL ONLINE
-              </div>
-            </div>
+        {videoId ? (
+          <YouTubeChat videoId={videoId} domain={domain} />
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-700">
+            <MessageSquare size={48} className="mb-4 opacity-10" />
+            <p className="text-sm font-bold uppercase tracking-widest opacity-30">Chat aguardando sinal...</p>
           </div>
-        </div>
-
-        <div className="flex-1 bg-black/40">
-          {videoId ? (
-            <iframe 
-              className="w-full h-full"
-              src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=${domain}`}
-              title="YouTube Live Chat"
-            ></iframe>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-700">
-              <MessageSquare size={48} className="mb-4 opacity-10" />
-              <p className="text-sm font-bold uppercase tracking-widest opacity-30">Chat aguardando sinal...</p>
-            </div>
-          )}
-        </div>
+        )}
 
         <div className="p-4 bg-slate-900/60 text-[10px] text-slate-500 font-bold text-center border-t border-white/5 uppercase tracking-widest">
           Sua interação fortalece nossa comunidade
