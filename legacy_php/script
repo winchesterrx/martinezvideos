@@ -1,0 +1,1 @@
+$(document).ready(function(){$(window).scrollTop()>20&&$("header nav").addClass("scroll");$(".toggle-button i").on("click",function(){$("header nav ul.navbar-top").toggleClass("active")});$(window).scroll(function(){$(this).scrollTop()>20?$("header nav").addClass("scroll"):$("header nav").removeClass("scroll")})})

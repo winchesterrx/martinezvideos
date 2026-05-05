@@ -1,0 +1,281 @@
+/* =========================================
+   PREMIUM UI UPGRADE - V4 DARK CINEMATIC
+   ========================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* --- 1. DARK THEME VARS --- */
+:root {
+    --primary: #ff6600;
+    --primary-glow: rgba(255, 102, 0, 0.4);
+    --bg-main: #020617;
+    /* Deepest Blue/Black */
+    --bg-surface: #0f172a;
+    /* Slate 900 */
+    --bg-card: #1e293b;
+    /* Slate 800 */
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.08);
+}
+
+body {
+    -webkit-user-select: auto !important;
+    user-select: auto !important;
+    background-color: var(--bg-main) !important;
+    font-family: 'Outfit', sans-serif !important;
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* Fix "White Wall" - Ensure transparency */
+.main-content,
+.content-wrapper,
+#content {
+    background: transparent !important;
+    padding-top: 0 !important;
+}
+
+/* --- 2. FULL WIDTH HEADER (Dark Glass) --- */
+.top-header {
+    height: 70px;
+    background: rgba(15, 23, 42, 0.9) !important;
+    /* Dark Glass */
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+
+    /* Reset Floating */
+    margin: 0 !important;
+    width: 100% !important;
+    border-radius: 0;
+
+    position: sticky !important;
+    top: 0;
+    z-index: 2000 !important;
+    pointer-events: auto !important;
+}
+
+.search-box input {
+    background: #1e293b !important;
+    border: 1px solid var(--border-color) !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+.search-box input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px var(--primary-glow) !important;
+}
+
+.search-box input::placeholder {
+    color: #64748b !important;
+}
+
+/* --- 3. FULL HEIGHT SIDEBAR --- */
+.sidebar {
+    background: var(--bg-surface) !important;
+    border-right: 1px solid var(--border-color);
+    z-index: 2001 !important;
+    width: 280px !important;
+
+    /* Reset Floating */
+    margin: 0 !important;
+    border-radius: 0;
+    height: 100vh !important;
+    box-shadow: none;
+}
+
+.setor-item {
+    color: var(--text-secondary);
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.setor-item:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.setor-item.active {
+    background: linear-gradient(90deg, rgba(255, 102, 0, 0.1), transparent) !important;
+    border-left: 3px solid var(--primary);
+    color: white !important;
+    border-radius: 0 8px 8px 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* --- 4. CINEMATIC CARDS --- */
+.video-card {
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    background: var(--bg-card) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    position: relative;
+    z-index: 10;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.video-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    z-index: 20;
+}
+
+.video-card-thumbnail {
+    border-radius: 12px 12px 0 0 !important;
+    aspect-ratio: 16/9;
+    /* Standard Video Ratio */
+    background: #000;
+}
+
+.video-card-content {
+    padding: 16px !important;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.video-card-title {
+    color: white !important;
+    font-weight: 500 !important;
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 12px !important;
+}
+
+/* Badges - Dark Mode */
+.video-badge {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border: none !important;
+    font-size: 0.75rem !important;
+}
+
+/* --- 5. ACTIONS & INTERACTION --- */
+.video-card-actions {
+    position: relative;
+    z-index: 100 !important;
+    pointer-events: auto !important;
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    /* Push to bottom */
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.video-card-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    /* Glassy */
+    border: 1px solid transparent !important;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease !important;
+    z-index: 101 !important;
+    cursor: pointer !important;
+}
+
+.video-card-btn:hover {
+    background: var(--primary) !important;
+    color: white !important;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.video-play-overlay {
+    background: rgba(0, 0, 0, 0.4) !important;
+}
+
+.play-overlay {
+    background: rgba(255, 102, 0, 0.9) !important;
+    /* Orange Play Button */
+    border: none;
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+/* --- 6. FOOTER --- */
+.footer-premium {
+    position: relative !important;
+    width: 100% !important;
+    margin: 60px 0 0 0 !important;
+    border-radius: 0;
+    background: var(--bg-surface) !important;
+    padding: 40px 0 !important;
+    border-top: 1px solid var(--border-color) !important;
+    z-index: 50 !important;
+    pointer-events: auto !important;
+    display: block !important;
+}
+
+.footer-brand {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    color: white;
+}
+
+.footer-links a {
+    color: var(--text-secondary) !important;
+}
+
+.footer-links a:hover {
+    color: var(--primary) !important;
+}
+
+/* Fix Typography Contrast */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: white !important;
+}
+
+p {
+    color: #94a3b8 !important;
+}
+
+/* --- 7. GRID LAYOUT FIX --- */
+.videos-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    /* Wider Cards */
+    gap: 30px !important;
+    padding: 20px 0 !important;
+}
+
+.video-card {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Mobile */
+@media (max-width: 992px) {
+    .sidebar {
+        margin: 0;
+    }
+
+    .top-header {
+        margin: 0;
+        width: 100%;
+        top: 0;
+    }
+
+    .videos-grid {
+        grid-template-columns: 1fr !important;
+        /* Single column on mobile */
+        gap: 20px !important;
+    }
+}
