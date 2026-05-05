@@ -35,12 +35,12 @@ export default async function LivePage() {
   const domain = headerList.get('host')?.split(':')[0] || 'localhost';
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] bg-slate-950 overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full min-h-screen bg-slate-950">
       
       {/* Lado Esquerdo: Player e Info */}
-      <div className="flex-1 flex flex-col h-full">
-        {/* Player */}
-        <div className="flex-1 bg-black relative">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Player Container */}
+        <div className="w-full aspect-video bg-black relative shadow-2xl">
           {videoId ? (
             <iframe 
               className="w-full h-full absolute inset-0"
@@ -58,7 +58,7 @@ export default async function LivePage() {
 
         {/* Letreiro de Avisos (Marquee) */}
         {live.subtexto && (
-          <div className="bg-orange-500/10 border-y border-white/5 py-3 overflow-hidden">
+          <div className="bg-orange-500/10 border-y border-white/5 py-3 overflow-hidden shrink-0">
             <div className="animate-marquee">
               <span className="text-orange-400 font-bold text-sm flex items-center gap-10">
                 <span>{live.subtexto}</span>
@@ -73,7 +73,7 @@ export default async function LivePage() {
         )}
 
         {/* Info da Live */}
-        <div className="p-6 md:p-8 bg-slate-900/50 border-t border-white/5">
+        <div className="p-6 md:p-8 bg-slate-900/30 flex-1 overflow-y-auto custom-scrollbar">
           <div className="flex items-center gap-3 mb-4">
              <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full">
                 <span className="relative flex h-2 w-2">
@@ -87,18 +87,22 @@ export default async function LivePage() {
                 <span>Transmissão em Tempo Real</span>
              </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">{live.titulo}</h1>
-          <p className="text-slate-400 text-sm leading-relaxed max-w-3xl">
-            {live.descricao || 'Acompanhe nossa transmissão ao vivo exclusiva para alunos da plataforma Martinez.'}
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">{live.titulo}</h1>
+          <div className="prose prose-invert prose-sm max-w-none">
+            <p className="text-slate-400 leading-relaxed">
+              {live.descricao || 'Acompanhe nossa transmissão ao vivo exclusiva para alunos da plataforma Martinez.'}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Lado Direito: Chat do YouTube */}
-      <div className="w-full lg:w-[400px] border-l border-white/5 bg-slate-950 flex flex-col">
-        <div className="p-4 border-b border-white/5 flex items-center gap-2 bg-slate-900/30">
-          <MessageSquare size={18} className="text-orange-500" />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Chat ao Vivo</h2>
+      <div className="w-full lg:w-[380px] xl:w-[420px] border-l border-white/5 bg-slate-950 flex flex-col h-[500px] lg:h-auto shrink-0">
+        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/50">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={18} className="text-orange-500" />
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Chat ao Vivo</h2>
+          </div>
         </div>
         <div className="flex-1 bg-black">
           {videoId ? (
@@ -114,7 +118,7 @@ export default async function LivePage() {
           )}
         </div>
         <div className="p-3 bg-slate-900/50 text-[10px] text-slate-500 text-center border-t border-white/5">
-          * Para comentar, você precisa estar logado na sua conta Google.
+          * Para comentar, use sua conta Google.
         </div>
       </div>
 
