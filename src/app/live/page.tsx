@@ -56,6 +56,22 @@ export default async function LivePage() {
           )}
         </div>
 
+        {/* Letreiro de Avisos (Marquee) */}
+        {live.subtexto && (
+          <div className="bg-orange-500/10 border-y border-white/5 py-3 overflow-hidden">
+            <div className="animate-marquee">
+              <span className="text-orange-400 font-bold text-sm flex items-center gap-10">
+                <span>{live.subtexto}</span>
+                <span>•</span>
+                <span>{live.subtexto}</span>
+                <span>•</span>
+                <span>{live.subtexto}</span>
+                <span>•</span>
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Info da Live */}
         <div className="p-6 md:p-8 bg-slate-900/50 border-t border-white/5">
           <div className="flex items-center gap-3 mb-4">

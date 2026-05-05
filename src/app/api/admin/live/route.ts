@@ -10,16 +10,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    const { titulo, url, ativo, descricao } = await request.json();
+    const { titulo, url, ativo, descricao, subtexto } = await request.json();
     
     const pool = await getDbConnection();
     
     // Atualiza tabela principal de transmissão
     await pool.query(`
       UPDATE transmissao_ao_vivo 
-      SET titulo = ?, url = ?, ativo = ?, descricao = ?
+      SET titulo = ?, url = ?, ativo = ?, descricao = ?, subtexto = ?
       WHERE id = 1
-    `, [titulo, url, ativo ? 1 : 0, descricao || '']);
+    `, [titulo, url, ativo ? 1 : 0, descricao || '', subtexto || '']);
 
     // Atualiza tabela de status secundária (live_status)
     await pool.query(`

@@ -12,7 +12,8 @@ export default function AdminLiveStudio() {
     titulo: '',
     url: '',
     ativo: false,
-    descricao: ''
+    descricao: '',
+    subtexto: ''
   });
 
   useEffect(() => {
@@ -28,7 +29,8 @@ export default function AdminLiveStudio() {
           titulo: data.live.titulo || '',
           url: data.live.url || '',
           ativo: data.live.ativo === 1,
-          descricao: data.live.descricao || ''
+          descricao: data.live.descricao || '',
+          subtexto: data.live.subtexto || ''
         });
       }
     } catch (e) {
@@ -129,6 +131,16 @@ export default function AdminLiveStudio() {
                   className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 transition-all"
                   placeholder="Diga aos alunos sobre o que é a live..."
                 />
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Avisos do Letreiro (Marquee)</label>
+                <textarea 
+                  rows={2}
+                  value={form.subtexto}
+                  onChange={e => setForm({...form, subtexto: e.target.value})}
+                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-orange-500 transition-all text-sm"
+                  placeholder="Ex: Em caso de dúvidas ligue xxxx • Suporte das 08h às 18h"
+                />
+                <p className="text-[10px] text-slate-600 mt-1 italic">Este texto ficará correndo na tela durante a live.</p>
               </div>
             </div>
 
