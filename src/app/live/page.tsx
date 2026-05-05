@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, MessageSquare, Radio, Users, Share2, Info, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { headers } from 'next/headers';
-import YouTubeChat from './YouTubeChat';
+import MartinezChat from './MartinezChat';
+import LiveActions from './LiveActions';
 
 export default async function LivePage() {
   const pool = await getDbConnection();
@@ -68,14 +69,7 @@ export default async function LivePage() {
               <h1 className="text-xl md:text-2xl font-black text-white leading-none">{live.titulo}</h1>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-3">
-             <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-slate-300 text-sm font-bold border border-white/5 transition-all backdrop-blur-md">
-                <Share2 size={16} /> Compartilhar
-             </button>
-             <button className="flex items-center gap-2 px-4 py-2 bg-orange-500/10 hover:bg-orange-500/20 rounded-xl text-orange-500 text-sm font-bold border border-orange-500/20 transition-all backdrop-blur-md">
-                <Bell size={16} /> Notificar
-             </button>
-          </div>
+          <LiveActions liveTitle={live.titulo} />
         </div>
 
         {/* Player Box */}
@@ -140,20 +134,16 @@ export default async function LivePage() {
 
       </div>
 
-      {/* Barra Lateral: Chat do YouTube Premium */}
-      <div className="relative z-20 w-full lg:w-[420px] xl:w-[480px] h-[600px] lg:h-screen bg-slate-950/80 backdrop-blur-3xl border-l border-white/5 flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)]">
+      {/* Barra Lateral: Martinez Native Chat */}
+      <div className="relative z-20 w-full lg:w-[420px] xl:w-[480px] h-[600px] lg:h-screen shrink-0 overflow-hidden">
         {videoId ? (
-          <YouTubeChat videoId={videoId} domain={domain} />
+          <MartinezChat videoId={videoId} />
         ) : (
-          <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-700">
+          <div className="h-full flex flex-col items-center justify-center p-12 text-center text-slate-700 bg-slate-950">
             <MessageSquare size={48} className="mb-4 opacity-10" />
-            <p className="text-sm font-bold uppercase tracking-widest opacity-30">Chat aguardando sinal...</p>
+            <p className="text-sm font-bold uppercase tracking-widest opacity-30">Aguardando sinal...</p>
           </div>
         )}
-
-        <div className="p-4 bg-slate-900/60 text-[10px] text-slate-500 font-bold text-center border-t border-white/5 uppercase tracking-widest">
-          Sua interação fortalece nossa comunidade
-        </div>
       </div>
 
     </div>
