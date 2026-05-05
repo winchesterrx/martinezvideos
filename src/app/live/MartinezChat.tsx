@@ -24,7 +24,23 @@ export default function MartinezChat({ videoId }: { videoId: string }) {
       const data = await res.json();
       if (data.stats) {
         setStats(data.stats);
-        if (data.stats.liveChatId) setChatId(data.stats.liveChatId);
+        if (data.stats.liveChatId) {
+          setChatId(data.stats.liveChatId);
+        } else {
+          // Fallback para comentários se não houver chat ativo
+          const cRes = await fetch(`/api/youtube/stats?type=comments&videoId=${videoId}`);
+          const cData = await cRes.json();
+          if (cData.comments) {
+            const formatted = cData.comments.map((c: any) => ({
+              id: c.id,
+              author: c.snippet.topLevelComment.snippet.authorDisplayName,
+              avatar: c.snippet.topLevelComment.snippet.authorProfileImageUrl,
+              text: c.snippet.topLevelComment.snippet.textDisplay,
+              timestamp: c.snippet.topLevelComment.snippet.publishedAt
+            }));
+            setMessages(formatted);
+          }
+        }
       }
     };
     fetchInitial();

@@ -31,3 +31,14 @@ export async function getYouTubeChatMessages(chatId: string) {
     return [];
   }
 }
+
+export async function getYouTubeVideoComments(videoId: string) {
+  try {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?videoId=${videoId}&part=snippet&maxResults=50&key=${API_KEY}`);
+    const data = await res.json();
+    return data.items || [];
+  } catch (error) {
+    console.error('YouTube Comments Error:', error);
+    return [];
+  }
+}
