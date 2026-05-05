@@ -143,6 +143,7 @@ export default function AdminLiveStudio() {
                 <p className="text-[10px] text-slate-600 mt-1 italic">Este texto ficará correndo na tela durante a live.</p>
               </div>
             </div>
+          </div>
 
             <div className="pt-6 border-t border-white/5 space-y-3">
               {!form.ativo ? (
