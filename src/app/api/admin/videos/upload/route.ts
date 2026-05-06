@@ -1,10 +1,10 @@
-// Force refresh: 2026-05-06 16:20
 import { NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { put } from '@vercel/blob';
 
 export async function POST(request: Request) {
   try {
@@ -44,35 +44,40 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Arquivo não enviado' }, { status: 400 });
       }
 
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      const uploadDir = join(process.cwd(), 'public', 'uploads');
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
+      // Tenta upload no Vercel Blob primeiro (para produção)
+      if (process.env.BLOB_READ_WRITE_TOKEN) {
+        const blob = await put(file.name, file, { access: 'public' });
+        videoUrl = blob.url;
+      } else {
+        // Fallback para local (apenas desenvolvimento local)
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const uploadDir = join(process.cwd(), 'public', 'uploads');
+        if (!existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
+        const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+        const filePath = join(uploadDir, fileName);
+        await writeFile(filePath, buffer);
+        videoUrl = `/uploads/${fileName}`;
       }
-
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-      const filePath = join(uploadDir, fileName);
-      await writeFile(filePath, buffer);
-
-      videoUrl = `/uploads/${fileName}`;
     }
 
     // Upload de Thumbnail (Banner)
     let thumbnailUrl = null;
     const thumbFile = formData.get('thumbnail_file') as File;
     if (thumbFile) {
-      const bytes = await thumbFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const uploadDir = join(process.cwd(), 'public', 'uploads');
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
+      if (process.env.BLOB_READ_WRITE_TOKEN) {
+        const blob = await put(thumbFile.name, thumbFile, { access: 'public' });
+        thumbnailUrl = blob.url;
+      } else {
+        const bytes = await thumbFile.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const uploadDir = join(process.cwd(), 'public', 'uploads');
+        if (!existsSync(uploadDir)) await mkdir(uploadDir, { recursive: true });
+        const fileName = `thumb-${Date.now()}-${thumbFile.name.replace(/\s+/g, '_')}`;
+        const filePath = join(uploadDir, fileName);
+        await writeFile(filePath, buffer);
+        thumbnailUrl = `/uploads/${fileName}`;
       }
-      const fileName = `thumb-${Date.now()}-${thumbFile.name.replace(/\s+/g, '_')}`;
-      const filePath = join(uploadDir, fileName);
-      await writeFile(filePath, buffer);
-      thumbnailUrl = `/uploads/${fileName}`;
     }
 
     // Busca o nome do setor para manter compatibilidade
