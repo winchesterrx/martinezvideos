@@ -1,3 +1,4 @@
+// Force refresh: 2026-05-06 16:20
 import { NextResponse } from 'next/server';
 import { getDbConnection } from '@/lib/db';
 import { getSession } from '@/lib/auth';
@@ -18,11 +19,23 @@ export async function POST(request: Request) {
     const tipoFonte = formData.get('tipo_fonte') as string;
     const setorId = formData.get('setor_id') as string;
     const moduloId = formData.get('modulo_id') as string;
+    let sequenciaId = formData.get('sequencia_id') as string;
+    const novaTrilhaNome = formData.get('nova_trilha_nome') as string;
     const isSequencia = formData.get('is_sequencia') === '1';
-    const sequenciaId = formData.get('sequencia_id') as string;
     const sequenciaOrdem = formData.get('sequencia_ordem') as string;
 
     let videoUrl = formData.get('url') as string;
+
+    const martinezDb = await getDbConnection();
+
+    // Lógica de Sequência (Trilha)
+    if (isSequencia && novaTrilhaNome) {
+      const [trilhaRes] = await martinezDb.query(
+        'INSERT INTO trilhas (nome, modulo_id) VALUES (?, ?)', 
+        [novaTrilhaNome, moduloId ? parseInt(moduloId) : null]
+      );
+      sequenciaId = (trilhaRes as any).insertId.toString();
+    }
 
     // Se for upload real de arquivo
     if (tipoFonte === 'upload') {
@@ -34,7 +47,6 @@ export async function POST(request: Request) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Caminho de upload (pasta public/uploads)
       const uploadDir = join(process.cwd(), 'public', 'uploads');
       if (!existsSync(uploadDir)) {
         await mkdir(uploadDir, { recursive: true });
@@ -44,27 +56,49 @@ export async function POST(request: Request) {
       const filePath = join(uploadDir, fileName);
       await writeFile(filePath, buffer);
 
-      // A URL final será relativa ao public
       videoUrl = `/uploads/${fileName}`;
     }
 
-    const pool = await getDbConnection();
+    // Upload de Thumbnail (Banner)
+    let thumbnailUrl = null;
+    const thumbFile = formData.get('thumbnail_file') as File;
+    if (thumbFile) {
+      const bytes = await thumbFile.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const uploadDir = join(process.cwd(), 'public', 'uploads');
+      if (!existsSync(uploadDir)) {
+        await mkdir(uploadDir, { recursive: true });
+      }
+      const fileName = `thumb-${Date.now()}-${thumbFile.name.replace(/\s+/g, '_')}`;
+      const filePath = join(uploadDir, fileName);
+      await writeFile(filePath, buffer);
+      thumbnailUrl = `/uploads/${fileName}`;
+    }
+
+    // Busca o nome do setor para manter compatibilidade
+    let setorNome = '1';
+    if (setorId) {
+      const [sRows]: any = await martinezDb.query('SELECT nome FROM setores WHERE id = ?', [setorId]);
+      if (sRows.length > 0) setorNome = sRows[0].nome;
+    }
 
     // Insere no banco
-    const [result] = await pool.query(`
+    const [result] = await martinezDb.query(`
       INSERT INTO videos (
-        titulo, descricao, url_video, setor_id, modulo_id, 
-        is_sequencia, sequencia_id, sequencia_ordem, data_upload
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        titulo, descricao, url_video, setor, setor_id, modulo_id, 
+        thumbnail, is_sequencia, sequencia_id, sequencia_ordem, data_upload
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `, [
       titulo, 
-      descricao, 
+      descricao || '', 
       videoUrl, 
-      setorId, 
-      moduloId, 
+      setorNome,
+      setorId ? parseInt(setorId) : null, 
+      moduloId ? parseInt(moduloId) : null, 
+      thumbnailUrl,
       isSequencia ? 1 : 0, 
-      sequenciaId || null, 
-      sequenciaOrdem || 1
+      sequenciaId ? parseInt(sequenciaId) : null, 
+      sequenciaOrdem ? parseInt(sequenciaOrdem) : 1
     ]);
 
     return NextResponse.json({ success: true, id: (result as any).insertId });

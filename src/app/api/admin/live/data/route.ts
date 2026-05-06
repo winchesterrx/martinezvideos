@@ -10,7 +10,8 @@ export async function GET() {
     }
 
     const pool = await getDbConnection();
-    const [rows] = await pool.query('SELECT * FROM transmissao_ao_vivo WHERE id = 1');
+    // Busca a live que estiver ATIVA no momento
+    const [rows] = await pool.query('SELECT * FROM transmissao_ao_vivo WHERE ativo = 1 ORDER BY created_at DESC LIMIT 1');
     const live = (rows as any[])[0] || null;
 
     return NextResponse.json({ live });

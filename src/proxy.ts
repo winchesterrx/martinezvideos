@@ -7,8 +7,15 @@ const publicRoutes = ['/login', '/api/auth/login'];
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Injeta headers para o layout saber a rota atual (Server Side)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+  requestHeaders.set('x-url', request.url);
+
   if (publicRoutes.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/favicon.ico')) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: { headers: requestHeaders }
+    });
   }
 
   const session = await getSession();
@@ -17,7 +24,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: { headers: requestHeaders }
+  });
 }
 
 export const config = {

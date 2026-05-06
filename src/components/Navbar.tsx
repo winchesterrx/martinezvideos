@@ -1,8 +1,9 @@
 'use client';
 
-import { Search, Bell, Menu, UserCircle } from 'lucide-react';
+import { Search, Menu, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import NotificationCenter from './NotificationCenter';
 
 export default function Navbar({ user, toggleSidebar }: { user: any, toggleSidebar: () => void }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,13 +44,9 @@ export default function Navbar({ user, toggleSidebar }: { user: any, toggleSideb
 
       {/* Direita: Perfil e Notificações */}
       <div className="flex items-center gap-3">
-        <button className="p-2 text-slate-400 hover:text-white rounded-full hover:bg-white/5 transition-colors relative">
-          <Bell className="w-5 h-5" />
-          {/* Badge de notificação */}
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-slate-950"></span>
-        </button>
+        <NotificationCenter />
         
-        <div className="flex items-center gap-2 pl-4 border-l border-white/10">
+        <div className="flex items-center gap-2 pl-2 border-l border-white/10 ml-2">
           <div className="hidden md:block text-right">
             <p className="text-sm font-medium text-slate-200 leading-none">{user.nome}</p>
             <p className="text-xs text-slate-500 mt-1">{user.cargo || 'Aluno'}</p>

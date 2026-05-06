@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import { getSession } from "@/lib/auth";
+import { headers } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,16 +23,25 @@ export default async function RootLayout({
   
   let setores = [];
   if (session) {
-    const { getDbConnection } = await import("@/lib/db");
-    const pool = await getDbConnection();
-    const [rows] = await pool.query('SELECT id, nome FROM setores WHERE ativo = "S" ORDER BY nome ASC');
-    setores = rows as any[];
+    try {
+      const { getDbConnection } = await import("@/lib/db");
+      const pool = await getDbConnection();
+      const [rows] = await pool.query('SELECT id, nome FROM setores WHERE ativo = "S" ORDER BY nome ASC');
+      setores = rows as any[];
+    } catch (error) {
+      console.error('Falha ao carregar setores (Banco offline):', error);
+      setores = [];
+    }
   }
+
+  const headerList = await headers();
+  const pathname = headerList.get('x-pathname') || '';
+  const isLoginPage = pathname === '/login';
 
   return (
     <html lang="pt-BR" className="dark">
       <body className={`${inter.className} bg-slate-950 text-slate-200 antialiased min-h-screen`}>
-        {session ? (
+        {session && !isLoginPage ? (
           <ClientLayout user={session} setores={setores}>
             {children}
           </ClientLayout>

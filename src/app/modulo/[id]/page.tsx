@@ -1,7 +1,10 @@
 import { getDbConnection } from '@/lib/db';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Video, FolderOpen, PlayCircle, Clock } from 'lucide-react';
+import { getSession } from '@/lib/auth';
+import VideoManagerActions from './VideoManagerActions';
 
 async function getModuloData(id: string) {
   const pool = await getDbConnection();
@@ -21,6 +24,10 @@ async function getModuloData(id: string) {
   const [videosData] = await pool.query('SELECT * FROM videos WHERE modulo_id = ? ORDER BY id DESC', [id]);
   const videos = videosData as any[];
 
+  // Buscar todas as trilhas deste módulo
+  const [trilhasData] = await pool.query('SELECT * FROM trilhas WHERE modulo_id = ?', [id]);
+  const trilhasInfo = trilhasData as any[];
+
   // Separar em Sequências vs Avulsos
   const sequencias: Record<string, { titulo: string; videos: any[] }> = {};
   const avulsos: any[] = [];
@@ -28,8 +35,9 @@ async function getModuloData(id: string) {
   videos.forEach((v) => {
     if (v.is_sequencia && v.sequencia_id) {
       if (!sequencias[v.sequencia_id]) {
+        const info = trilhasInfo.find(t => t.id === v.sequencia_id);
         sequencias[v.sequencia_id] = {
-          titulo: v.sequencia_titulo || `Trilha ${v.sequencia_id}`,
+          titulo: info?.nome || `Trilha ${v.sequencia_id}`,
           videos: []
         };
       }
@@ -49,6 +57,7 @@ async function getModuloData(id: string) {
 
 export default async function ModuloPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const session = await getSession();
   const data = await getModuloData(id);
   
   if (!data) {
@@ -57,6 +66,19 @@ export default async function ModuloPage({ params }: { params: Promise<{ id: str
 
   const { modulo, sequencias, avulsos } = data;
   const temConteudo = Object.keys(sequencias).length > 0 || avulsos.length > 0;
+
+  const getVideoId = (url: string) => {
+    if (!url) return null;
+    const ytMatch = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/);
+    if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+    
+    const driveMatch = url.match(/(?:id=|\/d\/)([0-9A-Za-z_-]{25,})/);
+    if (driveMatch) return { type: 'drive', id: driveMatch[1] };
+
+    if (url.includes('/uploads/')) return { type: 'local', id: url };
+    
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative">
@@ -104,33 +126,54 @@ export default async function ModuloPage({ params }: { params: Promise<{ id: str
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  {seq.videos.map((video, index) => (
-                    <Link key={video.id} href={`/video/${video.id}`} className="group relative bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-orange-500/30 transition-all shadow-md hover:shadow-orange-500/10 block">
-                      <div className="aspect-video bg-slate-800 relative overflow-hidden">
-                        {video.url_video && video.url_video.includes('youtube') ? (
-                          <img src={`https://img.youtube.com/vi/${video.url_video.split('v=')[1]}/mqdefault.jpg`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={video.titulo} />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-800 group-hover:scale-105 transition-transform duration-500">
-                            <Video className="w-8 h-8 text-slate-600" />
+                  {seq.videos.map((video, index) => {
+                    const info = getVideoId(video.url_video);
+                    let thumbUrl = video.thumbnail;
+                    
+                    if (!thumbUrl) {
+                       if (info?.type === 'youtube') thumbUrl = `https://img.youtube.com/vi/${info.id}/maxresdefault.jpg`;
+                       if (info?.type === 'drive') thumbUrl = `https://drive.google.com/thumbnail?id=${info.id}&sz=w800`;
+                    }
+                    
+                    return (
+                      <div key={video.id} className="group relative">
+                        <VideoManagerActions videoId={video.id} videoTitle={video.titulo} isAdmin={session?.adm === 'S'} />
+                        <Link href={`/video/${video.id}`} className="block bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-orange-500/30 transition-all shadow-md hover:shadow-orange-500/10">
+                          <div className="aspect-video bg-slate-800 relative overflow-hidden flex items-center justify-center">
+                            {thumbUrl ? (
+                              <img src={thumbUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={video.titulo} />
+                            ) : info?.type === 'local' ? (
+                              <video 
+                                src={info.id} 
+                                muted 
+                                loop 
+                                autoPlay 
+                                playsInline 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                                 <Video className="w-8 h-8 text-slate-700" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                               <PlayCircle className="w-12 h-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-all drop-shadow-lg" />
+                            </div>
+                            <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border border-white/10">
+                              Aula {index + 1}
+                            </div>
                           </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                           <PlayCircle className="w-12 h-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-all drop-shadow-lg" />
-                        </div>
-                        {/* Indicador de Ordem na Trilha */}
-                        <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-md border border-white/10">
-                          Aula {index + 1}
-                        </div>
+                          <div className="p-4">
+                            <h3 className="text-sm font-bold text-slate-200 line-clamp-2 group-hover:text-orange-400 transition-colors">{video.titulo}</h3>
+                            <div className="flex items-center gap-2 mt-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                              <Clock className="w-3 h-3" />
+                              {video.visualizacoes || 0} visualizações
+                            </div>
+                          </div>
+                        </Link>
                       </div>
-                      <div className="p-4">
-                        <h3 className="text-sm font-bold text-slate-200 line-clamp-2 group-hover:text-orange-400 transition-colors">{video.titulo}</h3>
-                        <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
-                          <Clock className="w-3 h-3" />
-                          {video.visualizacoes || 0} visualizações
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             ))}
@@ -144,23 +187,47 @@ export default async function ModuloPage({ params }: { params: Promise<{ id: str
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  {avulsos.map((video) => (
-                    <Link key={video.id} href={`/video/${video.id}`} className="group relative bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-slate-500/50 transition-all shadow-md block">
-                      <div className="aspect-video bg-slate-800 relative overflow-hidden">
-                        {video.url_video && video.url_video.includes('youtube') ? (
-                          <img src={`https://img.youtube.com/vi/${video.url_video.split('v=')[1]}/mqdefault.jpg`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100" alt={video.titulo} />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-800 group-hover:scale-105 transition-transform duration-500">
-                            <Video className="w-8 h-8 text-slate-600" />
+                  {avulsos.map((video) => {
+                    const info = getVideoId(video.url_video);
+                    let thumbUrl = video.thumbnail;
+                    
+                    if (!thumbUrl) {
+                       if (info?.type === 'youtube') thumbUrl = `https://img.youtube.com/vi/${info.id}/maxresdefault.jpg`;
+                       if (info?.type === 'drive') thumbUrl = `https://drive.google.com/thumbnail?id=${info.id}&sz=w800`;
+                    }
+
+                    return (
+                      <div key={video.id} className="group relative">
+                        <VideoManagerActions videoId={video.id} videoTitle={video.titulo} isAdmin={session?.adm === 'S'} />
+                        <Link href={`/video/${video.id}`} className="block bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-slate-500/50 transition-all shadow-md">
+                          <div className="aspect-video bg-slate-800 relative overflow-hidden flex items-center justify-center">
+                            {thumbUrl ? (
+                              <img src={thumbUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100" alt={video.titulo} />
+                            ) : info?.type === 'local' ? (
+                              <video 
+                                src={info.id} 
+                                muted 
+                                loop 
+                                autoPlay 
+                                playsInline 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                                 <Video className="w-8 h-8 text-slate-700" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors flex items-center justify-center">
+                               <PlayCircle className="w-10 h-10 text-white/40 group-hover:text-white transition-all opacity-0 group-hover:opacity-100" />
+                            </div>
                           </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors" />
+                          <div className="p-4">
+                            <h3 className="text-sm font-semibold text-slate-300 line-clamp-2 group-hover:text-white transition-colors">{video.titulo}</h3>
+                          </div>
+                        </Link>
                       </div>
-                      <div className="p-4">
-                        <h3 className="text-sm font-semibold text-slate-300 line-clamp-2 group-hover:text-white transition-colors">{video.titulo}</h3>
-                      </div>
-                    </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}

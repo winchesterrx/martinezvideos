@@ -39,19 +39,29 @@ async function getVideoData(id: string, userId: string) {
   let sequencia_titulo = '';
 
   if (video.is_sequencia && video.sequencia_id) {
-    const [t] = await pool.query('SELECT * FROM videos WHERE sequencia_id = ? ORDER BY sequencia_ordem ASC', [video.sequencia_id]);
+    const [t] = await pool.query('SELECT id, titulo, url_video, visualizacoes, thumbnail FROM videos WHERE sequencia_id = ? ORDER BY sequencia_ordem ASC', [video.sequencia_id]);
     trilha = t as any[];
-    sequencia_titulo = trilha.find(v => v.sequencia_titulo)?.sequencia_titulo || `Trilha ${video.sequencia_id}`;
+    
+    // Busca o nome da trilha na tabela trilhas
+    const [trilhaData] = await pool.query('SELECT nome FROM trilhas WHERE id = ?', [video.sequencia_id]);
+    sequencia_titulo = (trilhaData as any[])[0]?.nome || `Trilha ${video.sequencia_id}`;
   }
 
-  // Sugestões
-  const [sugestoes] = await pool.query('SELECT id, titulo, url_video FROM videos WHERE modulo_id = ? AND id != ? LIMIT 5', [video.modulo_id, id]);
+  // Sugestões Relacionadas (Mesmo setor ou módulo, mas fora da trilha atual)
+  const [relacionados] = await pool.query(`
+    SELECT id, titulo, url_video, visualizacoes, thumbnail 
+    FROM videos 
+    WHERE (modulo_id = ? OR setor_id = ?) 
+    AND id != ? 
+    AND (sequencia_id != ? OR sequencia_id IS NULL)
+    LIMIT 6
+  `, [video.modulo_id, video.setor_id, id, video.sequencia_id || 0]);
 
   return { 
     video, 
     trilha, 
     sequencia_titulo, 
-    sugestoes: sugestoes as any[],
+    sugestoes: relacionados as any[],
     comentarios: comentarios as any[],
     hasLiked
   };
@@ -150,6 +160,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
         video={video}
         trilha={trilha}
         sequencia_titulo={sequencia_titulo}
+        sugestoes={sugestoes}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlayCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -11,6 +11,17 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Se já estiver logado, redireciona para a home
+  useEffect(() => {
+    const checkSession = async () => {
+      const res = await fetch('/api/admin/setup-data'); // Usando um endpoint protegido como teste rápido
+      if (res.ok) {
+        router.push('/');
+      }
+    };
+    // checkSession(); // Opcional: Descomente se quiser check rigoroso
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

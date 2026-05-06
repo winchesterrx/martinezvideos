@@ -2,21 +2,31 @@ import mysql from 'mysql2/promise';
 
 const dbConfig = {
   host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  // Para evitar queda de conexão em Serverless, usamos o pool
+  // Otimizações para evitar ECONNRESET e manter conexões vivas
   waitForConnections: true,
   connectionLimit: 10,
+  maxIdle: 10, // número máximo de conexões ociosas
+  idleTimeout: 60000, // tempo para expirar conexões ociosas (60s)
   queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 };
 
 // Singleton para o pool de conexões (evita múltiplos pools em ambiente serverless/Next.js)
-let pool: mysql.Pool;
+const globalForDb = global as unknown as { pool: mysql.Pool };
 
 export async function getDbConnection() {
-  if (!pool) {
-    pool = mysql.createPool(dbConfig);
+  if (!globalForDb.pool) {
+    globalForDb.pool = mysql.createPool(dbConfig);
+    
+    // Log de erros no pool para facilitar debug
+    globalForDb.pool.on('error', (err) => {
+      console.error('Erro inesperado no Pool de Banco de Dados:', err);
+    });
   }
-  return pool;
+  return globalForDb.pool;
 }

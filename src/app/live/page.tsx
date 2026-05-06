@@ -6,8 +6,10 @@ import { headers } from 'next/headers';
 import MartinezChat from './MartinezChat';
 import LiveActions from './LiveActions';
 import { getYouTubeVideoStats } from '@/lib/youtube';
+import { getSession } from '@/lib/auth';
 
 export default async function LivePage() {
+  const session = await getSession();
   const pool = await getDbConnection();
   const [lives] = await pool.query('SELECT * FROM transmissao_ao_vivo WHERE ativo = 1 LIMIT 1');
   const live = (lives as any[])[0];
@@ -36,8 +38,43 @@ export default async function LivePage() {
   const videoId = getVideoId(live.url);
   const youtubeStats = videoId ? await getYouTubeVideoStats(videoId) : null;
 
+  // Busca Recomendações Relacionadas
+  let relatedVideos: any[] = [];
+  if (live.setor_id || live.modulo_id) {
+    const [related] = await pool.query(`
+      SELECT id, titulo, url_video, visualizacoes, thumbnail 
+      FROM videos 
+      WHERE (setor_id = ? OR modulo_id = ?) 
+      AND url_video NOT LIKE ?
+      ORDER BY data_upload DESC 
+      LIMIT 6
+    `, [live.setor_id, live.modulo_id, `%${videoId}%`]);
+    relatedVideos = related as any[];
+  }
+
+  const getPreviewSource = (url: string, thumbnail: string | null) => {
+    if (thumbnail) return { type: 'image', src: thumbnail };
+    if (!url) return null;
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const id = getVideoId(url);
+      return { type: 'image', src: `https://img.youtube.com/vi/${id}/mqdefault.jpg` };
+    }
+    
+    if (url.includes('drive.google.com')) {
+      const id = url.match(/(?:id=|\/d\/)([0-9A-Za-z_-]{25,})/)?.[1];
+      return { type: 'image', src: `https://drive.google.com/thumbnail?id=${id}&sz=w400` };
+    }
+    
+    if (url.includes('/uploads/')) {
+      return { type: 'video', src: url };
+    }
+    
+    return null;
+  };
+
   return (
-    <div className="relative min-h-screen bg-slate-950 flex flex-col overflow-hidden p-6 lg:p-10 gap-8">
+    <div className="relative min-h-screen bg-slate-950 flex flex-col overflow-y-auto p-6 lg:p-10 gap-8">
       
       {/* Background Mask */}
       <div className="fixed inset-0 z-0">
@@ -86,40 +123,119 @@ export default async function LivePage() {
           </div>
         </div>
 
-        {/* Lado Direito: Chat (Exatamente na altura do vídeo) */}
-        <div className="lg:col-span-1 relative">
-           <div className="absolute inset-0 flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl">
+        {/* Lado Direito: Chat + Recomendações */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+           <div className="h-[450px] lg:h-[500px] flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl">
              {videoId && <MartinezChat videoId={videoId} />}
            </div>
+
+           {/* Recomendações Minimalistas */}
+           {relatedVideos.length > 0 && (
+             <div className="space-y-4">
+                <div className="flex items-center justify-between px-2">
+                   <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Recomendações</h4>
+                   <div className="w-8 h-px bg-white/5" />
+                </div>
+                <div className="flex flex-col gap-3">
+                   {relatedVideos.map((vid) => {
+                      const preview = getPreviewSource(vid.url_video, vid.thumbnail);
+                      return (
+                        <Link 
+                          key={vid.id} 
+                          href={`/video/${vid.id}`}
+                          className="group flex items-center gap-4 p-2.5 rounded-2xl hover:bg-white/5 transition-all border border-transparent hover:border-white/5"
+                        >
+                           <div className="relative w-32 aspect-video rounded-xl overflow-hidden bg-slate-900 shrink-0 shadow-lg">
+                              {preview?.type === 'image' ? (
+                                <img 
+                                  src={preview.src} 
+                                  alt={vid.titulo}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
+                              ) : preview?.type === 'video' ? (
+                                <video 
+                                  src={preview.src}
+                                  muted
+                                  loop
+                                  autoPlay
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Radio className="text-slate-700" size={24} />
+                                </div>
+                              )}
+                           </div>
+                           <div className="flex flex-col min-w-0">
+                              <h5 className="text-[13px] font-medium text-slate-200 line-clamp-2 leading-tight group-hover:text-orange-500 transition-colors">
+                                {vid.titulo}
+                              </h5>
+                              <span className="text-[9px] text-slate-500 font-bold uppercase mt-1.5 flex items-center gap-1.5">
+                                <div className="w-1 h-1 rounded-full bg-slate-700" />
+                                {vid.visualizacoes || 0} visualizações
+                              </span>
+                           </div>
+                        </Link>
+                      );
+                   })}
+                </div>
+             </div>
+           )}
         </div>
       </div>
 
       {/* Área de Ações e Stats (Abaixo da Grid Principal) */}
       <div className="relative z-10 lg:w-[75%] -mt-4">
-        {videoId && <LiveActions videoId={videoId} youtubeStats={youtubeStats} />}
+        {videoId && (
+          <LiveActions 
+            videoId={videoId} 
+            youtubeStats={youtubeStats} 
+            userId={session?.id} 
+            userName={session?.nome} 
+          />
+        )}
       </div>
 
-      {/* Descrição e Letreiro */}
-      <div className="relative z-10 lg:w-[75%] space-y-6">
+      {/* Área de Informação Minimalista */}
+      <div className="relative z-10 lg:w-[75%] space-y-12 pb-20">
+         
+         {/* Ticker Elegante */}
          {live.subtexto && (
-            <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 py-4 rounded-2xl overflow-hidden shadow-lg border-l-4 border-l-orange-500">
-              <div className="animate-marquee flex items-center gap-20">
-                <span className="text-orange-400 font-black text-sm uppercase flex items-center gap-2 shrink-0">
-                  <Info size={16} /> {live.subtexto}
+            <div className="border-y border-white/5 py-3 overflow-hidden">
+              <div className="animate-marquee whitespace-nowrap flex items-center gap-24">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                  <div className="w-1 h-1 bg-orange-500 rounded-full" /> {live.subtexto}
                 </span>
-                <span className="text-slate-600">|</span>
-                <span className="text-orange-400 font-black text-sm uppercase shrink-0">{live.subtexto}</span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] flex items-center gap-4">
+                  <div className="w-1 h-1 bg-orange-500 rounded-full" /> {live.subtexto}
+                </span>
               </div>
             </div>
          )}
          
-         <div className="bg-slate-900/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl">
-            <h3 className="text-white font-black text-sm mb-3 flex items-center gap-2">
-              <Info size={16} className="text-orange-500" /> Detalhes da Transmissão
-            </h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              {live.descricao || 'Sintonize nesta aula de alta performance. Conteúdo exclusivo Martinez.'}
-            </p>
+         {/* Descrição Clean */}
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pt-4">
+            <div className="md:col-span-2 space-y-6">
+               <h3 className="text-white font-medium text-lg tracking-tight">Sobre esta transmissão</h3>
+               <p className="text-slate-400 text-sm leading-relaxed max-w-2xl">
+                  {live.descricao || 'Sintonize nesta aula de alta performance. Conteúdo exclusivo Martinez focado em resultados e experiência imersiva.'}
+               </p>
+            </div>
+
+            <div className="space-y-6 border-l border-white/5 pl-12">
+               <div className="space-y-1">
+                  <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Qualidade</span>
+                  <p className="text-xs font-medium text-slate-300">4K Ultra HD • 60 FPS</p>
+               </div>
+               <div className="space-y-1">
+                  <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Áudio</span>
+                  <p className="text-xs font-medium text-slate-300">Dolby Digital Plus</p>
+               </div>
+               <div className="space-y-1">
+                  <span className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Segurança</span>
+                  <p className="text-xs font-medium text-emerald-500/80">Criptografia Ativa</p>
+               </div>
+            </div>
          </div>
       </div>
 

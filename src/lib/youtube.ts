@@ -26,8 +26,13 @@ export async function getYouTubeChatMessages(chatId: string) {
   try {
     const res = await fetch(`https://www.googleapis.com/youtube/v3/liveChat/messages?liveChatId=${chatId}&part=snippet,authorDetails&key=${API_KEY}`);
     const data = await res.json();
+    if (data.error) {
+      console.error('YouTube Chat Error Response:', JSON.stringify(data.error));
+      return [];
+    }
     return data.items || [];
   } catch (error) {
+    console.error('YouTube Chat Fetch Exception:', error);
     return [];
   }
 }

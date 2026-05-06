@@ -3,7 +3,7 @@
 import { Share2, Bell, Check, ThumbsUp, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export default function LiveActions({ videoId, youtubeStats }: { videoId: string, youtubeStats: any }) {
+export default function LiveActions({ videoId, youtubeStats, userId, userName }: { videoId: string, youtubeStats: any, userId?: any, userName?: string }) {
   const [copied, setCopied] = useState(false);
   const [notified, setNotified] = useState(false);
   const [localStats, setLocalStats] = useState({ likes: 0, views: 0 });
@@ -12,103 +12,161 @@ export default function LiveActions({ videoId, youtubeStats }: { videoId: string
   useEffect(() => {
     // Carrega métricas do banco Martinez
     const fetchMetrics = async () => {
-      const res = await fetch(`/api/live/metrics?videoId=${videoId}`);
-      const data = await res.json();
-      setLocalStats(data);
+      try {
+        const res = await fetch(`/api/live/metrics?videoId=${videoId}&userId=${userId || ''}`, { cache: 'no-store' });
+        const data = await res.json();
+        setLocalStats(data);
+        setIsLiked(data.isLiked);
+        setNotified(data.isNotified);
+      } catch (e) {
+        console.error("Erro ao buscar métricas:", e);
+      }
     };
     fetchMetrics();
 
-    // Registra visualização local ao carregar
-    fetch('/api/live/metrics', {
-      method: 'POST',
-      body: JSON.stringify({ videoId, type: 'view' }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    // Registra visualização local após 5 segundos de retenção
+    const viewTimeout = setTimeout(() => {
+      fetch('/api/live/metrics', {
+        method: 'POST',
+        body: JSON.stringify({ videoId, videoUrl: window.location.href, type: 'view', userId, userName }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }, 5000);
+
+    return () => clearTimeout(viewTimeout);
   }, [videoId]);
 
   const handleLike = async () => {
-    if (isLiked) return;
-    const res = await fetch('/api/live/metrics', {
-      method: 'POST',
-      body: JSON.stringify({ videoId, type: 'like' }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const data = await res.json();
-    setLocalStats(prev => ({ ...prev, likes: data.total }));
-    setIsLiked(true);
+    if (!videoId) return;
+
+    try {
+      const origin = window.location.origin;
+      const res = await fetch(`${origin}/api/live/metrics`, {
+        method: 'POST',
+        body: JSON.stringify({ videoId, videoUrl: window.location.href, type: 'like', userId, userName }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro desconhecido no servidor');
+      }
+
+      setLocalStats(prev => ({ ...prev, likes: data.total }));
+      setIsLiked(data.liked);
+
+      // Se curtiu agora, oferece para curtir no YouTube também
+      if (data.liked) {
+        if (confirm('Curtiu no Martinez! Quer abrir a live oficial para curtir no YouTube também?')) {
+          window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+        }
+      }
+    } catch (error: any) {
+      console.error('Falha técnica na curtida:', error);
+      alert('Erro do Servidor: ' + error.message);
+    }
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     setCopied(true);
+    
+    // Registra compartilhamento no banco
+    await fetch('/api/live/metrics', {
+      method: 'POST',
+      body: JSON.stringify({ videoId, videoUrl: window.location.href, type: 'share', userId, userName }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleNotify = async () => {
+    const nextState = !notified;
+    setNotified(nextState);
+
+    try {
+      // Registra pedido de notificação no banco (Toggles global preference)
+      await fetch('/api/live/metrics', {
+        method: 'POST',
+        body: JSON.stringify({ videoId, videoUrl: window.location.href, type: 'notify', userId, userName }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (nextState) {
+        alert('Lembrete Ativado! Você será notificado quando Martinez estiver Online.');
+      }
+    } catch (e) {
+      console.error(e);
+      setNotified(!nextState);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-4 py-6">
-      <div className="flex flex-wrap items-center justify-between gap-6 bg-slate-900/40 p-6 rounded-2xl border border-white/5 backdrop-blur-xl">
+    <div className="flex flex-col gap-6 py-6">
+      <div className="flex flex-wrap items-center justify-between gap-8 border-b border-white/5 pb-8">
         
-        {/* Stats de Visualização Combinada */}
-        <div className="flex items-center gap-6">
+        {/* Stats Minimalistas */}
+        <div className="flex items-center gap-12">
           <div className="flex flex-col">
-            <div className="flex items-center gap-2 text-slate-400 mb-1">
-              <Eye size={16} className="text-orange-500" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total de Views</span>
-            </div>
-            <div className="text-2xl font-black text-white">
-              {((youtubeStats?.views || 0) + localStats.views).toLocaleString()}
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mb-1">Audiência</span>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
+              <span className="text-xl font-medium text-white tracking-tight">
+                {((youtubeStats?.views || 0) + localStats.views).toLocaleString()}
+              </span>
             </div>
           </div>
-          <div className="w-px h-10 bg-white/10" />
+          
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-500 uppercase mb-1">Status</span>
-            <div className="flex items-center gap-2 text-sm font-black text-emerald-400">
-               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-               {youtubeStats?.isLive ? 'AO VIVO' : 'GRAVADO'}
-            </div>
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mb-1">Status</span>
+            <span className={`text-xs font-bold ${youtubeStats?.isLive ? 'text-red-500' : 'text-slate-400'}`}>
+              {youtubeStats?.isLive ? '● TRANSMITINDO' : 'OFFLINE'}
+            </span>
           </div>
         </div>
 
-        {/* Botões de Ação Martinez */}
-        <div className="flex items-center gap-4">
+        {/* Botões Clean */}
+        <div className="flex items-center gap-3">
           
-          <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
+          <div className="flex items-center bg-white/[0.03] border border-white/10 rounded-xl overflow-hidden">
             <button 
               onClick={handleLike}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-black transition-all ${
+              className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition-all ${
                 isLiked 
-                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
-                : 'text-slate-300 hover:bg-white/10'
+                ? 'bg-orange-500 text-white' 
+                : 'text-slate-300 hover:bg-white/5'
               }`}
             >
-              <ThumbsUp size={18} className={isLiked ? 'fill-white' : ''} />
-              {localStats.likes} <span className="text-[10px] opacity-60">no site</span>
+              <ThumbsUp size={16} className={isLiked ? 'fill-white' : ''} />
+              {localStats.likes}
             </button>
-            <div className="w-px h-6 bg-white/10 mx-1" />
-            <div className="px-4 text-xs font-bold text-slate-500">
-              {Number(youtubeStats?.likes || 0).toLocaleString()} <span className="text-[9px]">no YT</span>
+            <div className="w-px h-4 bg-white/10" />
+            <div className="px-4 text-[11px] font-medium text-slate-500">
+              {Number(youtubeStats?.likes || 0).toLocaleString()} <span className="opacity-50 ml-0.5">YT</span>
             </div>
           </div>
 
           <button 
             onClick={handleShare}
-            className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-full text-slate-300 text-sm font-black border border-white/10 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 rounded-xl text-slate-300 text-sm font-medium transition-all"
           >
-            {copied ? <Check size={18} className="text-emerald-500" /> : <Share2 size={18} />}
-            {copied ? 'Copiado' : 'Compartilhar'}
+            <Share2 size={16} />
+            Compartilhar
           </button>
 
           <button 
-            onClick={() => setNotified(!notified)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-black border transition-all ${
+            onClick={handleNotify}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border transition-all ${
               notified 
-              ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' 
-              : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300'
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
+              : 'bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 text-slate-300'
             }`}
           >
-            <Bell size={18} className={notified ? 'fill-emerald-400' : ''} />
-            {notified ? 'Lembrete' : 'Me Avisar'}
+            <Bell size={16} className={notified ? 'fill-emerald-500' : ''} />
+            {notified ? 'Ativado' : 'Avisar'}
           </button>
 
         </div>

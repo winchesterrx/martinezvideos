@@ -13,8 +13,9 @@ export async function GET() {
     
     const [setores] = await pool.query('SELECT id, nome FROM setores WHERE ativo = "S" ORDER BY nome ASC');
     const [modulos] = await pool.query('SELECT id, nome, setor_id FROM modulos WHERE ativo = "S" ORDER BY nome ASC');
+    const [trilhas] = await pool.query('SELECT id, nome, modulo_id FROM trilhas ORDER BY created_at DESC');
 
-    return NextResponse.json({ setores, modulos });
+    return NextResponse.json({ setores, modulos, trilhas });
     
   } catch (error) {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });

@@ -9,9 +9,13 @@ import {
   LayoutDashboard,
   Settings,
   TrendingUp,
-  ArrowUpRight
+  ArrowUpRight,
+  Calendar,
+  ThumbsUp,
+  ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
+import DeleteLiveButton from './components/DeleteLiveButton';
 
 export default async function AdminDashboard() {
   const pool = await getDbConnection();
@@ -36,6 +40,23 @@ export default async function AdminDashboard() {
   // 3. Status da Live Atual
   const [lives] = await pool.query('SELECT * FROM transmissao_ao_vivo WHERE ativo = 1 LIMIT 1');
   const liveAtiva = (lives as any[])[0] || null;
+
+  // 4. Histórico de Lives
+  const [historyResults] = await pool.query(`
+    SELECT t.*, 
+    (SELECT COUNT(*) FROM martinez_logs_master WHERE video_id = SUBSTRING_INDEX(t.url, 'v=', -1) AND tipo_acao = 'VIEW') as views,
+    (SELECT COUNT(*) FROM martinez_logs_master WHERE video_id = SUBSTRING_INDEX(t.url, 'v=', -1) AND tipo_acao = 'LIKE') as likes
+    FROM transmissao_ao_vivo t 
+    ORDER BY t.created_at DESC 
+    LIMIT 6
+  `);
+  const history = historyResults as any[];
+
+  const getVideoId = (url: string) => {
+    if (!url) return null;
+    const match = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/);
+    return match ? match[1] : null;
+  };
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
@@ -186,6 +207,83 @@ export default async function AdminDashboard() {
           <h3 className="text-xl font-bold text-white mb-2">Comentários</h3>
           <p className="text-slate-400 text-sm">Veja o que os alunos estão falando e responda dúvidas.</p>
         </Link>
+      </div>
+
+      {/* Histórico de Performance Integrado */}
+      <div className="space-y-8 pb-20">
+        <div className="flex items-center justify-between">
+           <h2 className="text-2xl font-black text-white uppercase tracking-widest flex items-center gap-3">
+             <Calendar size={28} className="text-orange-500" /> Histórico de Performance
+           </h2>
+           <Link href="/admin/live" className="text-sm font-bold text-orange-500 hover:underline">Ver Estúdio Completo →</Link>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {history.map((item) => {
+            const vid = getVideoId(item.url);
+            return (
+              <Link 
+                key={item.id} 
+                href="/admin/live"
+                className="group relative bg-slate-900 border border-white/5 rounded-[40px] p-8 hover:border-orange-500/50 transition-all cursor-pointer overflow-hidden"
+              >
+                {/* Background do YouTube com Máscara */}
+                {vid && (
+                  <div 
+                    className="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity duration-500"
+                    style={{
+                      backgroundImage: `url(https://img.youtube.com/vi/${vid}/maxresdefault.jpg)`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent" />
+                  </div>
+                )}
+
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${item.ativo === 1 ? 'bg-green-500/20 text-green-500' : 'bg-slate-800 text-slate-500'}`}>
+                        {item.ativo === 1 ? 'Ao Vivo' : 'Finalizado'}
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">{new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+
+                    {/* Botão de Excluir Integrado */}
+                    <DeleteLiveButton id={item.id} />
+                  </div>
+
+                  <h3 className="text-xl font-black text-white mb-8 line-clamp-2 leading-tight group-hover:text-orange-500 transition-colors">
+                    {item.titulo}
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-950/50 border border-white/5 p-4 rounded-2xl">
+                       <div className="flex items-center gap-2 mb-1 text-orange-500">
+                          <Eye size={12} />
+                          <span className="text-[10px] font-black uppercase">Views</span>
+                       </div>
+                       <span className="text-xl font-black text-white">{item.views || 0}</span>
+                    </div>
+                    <div className="bg-slate-950/50 border border-white/5 p-4 rounded-2xl">
+                       <div className="flex items-center gap-2 mb-1 text-indigo-400">
+                          <ThumbsUp size={12} />
+                          <span className="text-[10px] font-black uppercase">Likes</span>
+                       </div>
+                       <span className="text-xl font-black text-white">{item.likes || 0}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between text-slate-500 group-hover:text-white transition-colors">
+                     <span className="text-[10px] font-black uppercase tracking-widest">Ver No Estúdio</span>
+                     <ArrowLeft size={16} className="rotate-180" />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
     </div>
