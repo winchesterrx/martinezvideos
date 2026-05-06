@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   const noticias = notificacoes as any[];
 
   // 3. Buscar Vídeos Recentes
-  const [recentes] = await pool.query('SELECT * FROM videos ORDER BY id DESC LIMIT 5'); // Usando ID como aproximação de recência já que não temos created_at claro
+  const [recentes] = await pool.query('SELECT * FROM videos ORDER BY id DESC LIMIT 5'); 
   const videosRecentes = recentes as any[];
 
   // 4. Buscar Trilhas (Vídeos em Sequência)
@@ -33,6 +33,27 @@ export default async function DashboardPage() {
   // 5. Sistemas Ativos (Para a lista secundária)
   const [setores] = await pool.query('SELECT * FROM setores WHERE ativo = "S" ORDER BY nome ASC');
   const sistemas = setores as any[];
+
+  const getPreviewSource = (url: string, thumbnail: string | null) => {
+    if (thumbnail) return { type: 'image', src: thumbnail };
+    if (!url) return null;
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const id = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
+      return { type: 'image', src: `https://img.youtube.com/vi/${id}/mqdefault.jpg` };
+    }
+    
+    if (url.includes('drive.google.com')) {
+      const id = url.match(/(?:id=|\/d\/)([0-9A-Za-z_-]{25,})/)?.[1];
+      return { type: 'image', src: `https://drive.google.com/thumbnail?id=${id}&sz=w800` };
+    }
+    
+    if (url.includes('/uploads/')) {
+      return { type: 'video', src: url };
+    }
+    
+    return null;
+  };
 
   return (
     <div className="min-h-[200vh] bg-slate-950 text-white pb-24">
@@ -110,17 +131,27 @@ export default async function DashboardPage() {
               <h2 className="text-2xl font-bold text-white">Trilhas Recomendadas</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {trilhas.map((trilha) => (
-                <Link key={trilha.id} href={`/video/${trilha.id}`} className="group block relative rounded-2xl overflow-hidden aspect-video bg-slate-900 border border-white/5">
-                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent z-10" />
-                   {/* Fallback image */}
-                   <img src={`https://images.unsplash.com/photo-[RANDOM_ID]?q=80&w=600&auto=format&fit=crop`} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=800&auto=format&fit=crop")' }} alt="" />
-                   <div className="absolute inset-0 z-20 p-4 flex flex-col justify-end">
-                      <span className="text-xs font-bold text-orange-400 mb-1">TRILHA DE APRENDIZADO</span>
-                      <h3 className="text-sm font-bold text-white line-clamp-2">{trilha.titulo || `Sequência ${trilha.sequencia_id}`}</h3>
-                   </div>
-                </Link>
-              ))}
+              {trilhas.map((trilha) => {
+                const preview = getPreviewSource(trilha.url_video, trilha.thumbnail);
+                return (
+                  <Link key={trilha.id} href={`/video/${trilha.id}`} className="group block relative rounded-2xl overflow-hidden aspect-video bg-slate-900 border border-white/5">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent z-10" />
+                    {preview?.type === 'image' ? (
+                       <img src={preview.src} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" alt="" />
+                    ) : preview?.type === 'video' ? (
+                       <video src={preview.src} muted loop autoPlay className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                       <div className="absolute inset-0 w-full h-full bg-slate-900 flex items-center justify-center">
+                          <Video className="text-slate-800" size={32} />
+                       </div>
+                    )}
+                    <div className="absolute inset-0 z-20 p-4 flex flex-col justify-end">
+                       <span className="text-xs font-bold text-orange-400 mb-1 uppercase tracking-tighter">TRILHA DE APRENDIZADO</span>
+                       <h3 className="text-sm font-bold text-white line-clamp-2">{trilha.titulo}</h3>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
@@ -132,24 +163,29 @@ export default async function DashboardPage() {
             <h2 className="text-2xl font-bold text-white">Adicionados Recentemente</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-            {videosRecentes.map((video) => (
-              <Link key={video.id} href={`/video/${video.id}`} className="group bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-orange-500/30 transition-colors">
-                <div className="aspect-video bg-slate-800 relative overflow-hidden">
-                   {video.url_video && video.url_video.includes('youtube') ? (
-                     <img src={`https://img.youtube.com/vi/${video.url_video.split('v=')[1]}/mqdefault.jpg`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={video.titulo} />
-                   ) : (
-                     <div className="w-full h-full flex items-center justify-center bg-slate-800 group-hover:scale-105 transition-transform duration-500">
-                       <Video className="w-8 h-8 text-slate-600" />
-                     </div>
-                   )}
-                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-sm font-semibold text-slate-200 line-clamp-2 group-hover:text-orange-400 transition-colors">{video.titulo}</h3>
-                  <p className="text-xs text-slate-500 mt-2 line-clamp-1">{video.setor || 'Geral'}</p>
-                </div>
-              </Link>
-            ))}
+            {videosRecentes.map((video) => {
+              const preview = getPreviewSource(video.url_video, video.thumbnail);
+              return (
+                <Link key={video.id} href={`/video/${video.id}`} className="group bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-orange-500/30 transition-colors">
+                  <div className="aspect-video bg-slate-800 relative overflow-hidden">
+                    {preview?.type === 'image' ? (
+                       <img src={preview.src} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={video.titulo} />
+                    ) : preview?.type === 'video' ? (
+                       <video src={preview.src} muted loop autoPlay className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                       <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                         <Video className="w-8 h-8 text-slate-600" />
+                       </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-slate-200 line-clamp-2 group-hover:text-orange-400 transition-colors">{video.titulo}</h3>
+                    <p className="text-[10px] font-bold text-slate-500 mt-2 line-clamp-1 uppercase tracking-widest">{video.setor || 'Geral'}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
