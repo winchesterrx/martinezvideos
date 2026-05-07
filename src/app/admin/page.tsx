@@ -12,7 +12,8 @@ import {
   ArrowUpRight,
   Calendar,
   ThumbsUp,
-  ArrowLeft
+  ArrowLeft,
+  Bell
 } from 'lucide-react';
 import Link from 'next/link';
 import DeleteLiveButton from './components/DeleteLiveButton';
@@ -191,21 +192,36 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Ações Rápidas de Gestão */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-20">
-        <Link href="/admin/usuarios" className="p-8 rounded-3xl bg-blue-500/5 border border-blue-500/20 hover:bg-blue-500/10 transition-all group">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+        <Link href="/admin/usuarios" className="p-6 rounded-3xl bg-blue-500/5 border border-blue-500/20 hover:bg-blue-500/10 transition-all group">
           <Users size={32} className="text-blue-500 mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">Usuários</h3>
-          <p className="text-slate-400 text-sm">Controle permissões, bloqueie acessos e visualize atividades.</p>
+          <p className="text-slate-400 text-sm">Controle permissões e acessos.</p>
         </Link>
-        <Link href="/admin/dashboard" className="p-8 rounded-3xl bg-emerald-500/5 border border-emerald-500/20 hover:bg-emerald-500/10 transition-all group">
+        <Link href="/admin/home" className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/20 hover:bg-emerald-500/10 transition-all group">
           <LayoutDashboard size={32} className="text-emerald-500 mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">Personalizar Home</h3>
-          <p className="text-slate-400 text-sm">Altere os banners, notícias e recomendações da IA.</p>
+          <p className="text-slate-400 text-sm">Altere banners e destaques.</p>
         </Link>
-        <Link href="/admin/comentarios" className="p-8 rounded-3xl bg-indigo-500/5 border border-indigo-500/20 hover:bg-indigo-500/10 transition-all group">
+        <Link href="/admin/comentarios" className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/20 hover:bg-indigo-500/10 transition-all group">
           <MessageSquare size={32} className="text-indigo-500 mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">Comentários</h3>
-          <p className="text-slate-400 text-sm">Veja o que os alunos estão falando e responda dúvidas.</p>
+          <p className="text-slate-400 text-sm">Moderação e respostas.</p>
+        </Link>
+        <Link href="/admin/setores" className="p-6 rounded-3xl bg-orange-500/5 border border-orange-500/20 hover:bg-orange-500/10 transition-all group">
+          <Settings size={32} className="text-orange-500 mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">Sistemas</h3>
+          <p className="text-slate-400 text-sm">Gerencie setores (Saúde, etc).</p>
+        </Link>
+        <Link href="/admin/modulos" className="p-6 rounded-3xl bg-purple-500/5 border border-purple-500/20 hover:bg-purple-500/10 transition-all group">
+          <Video size={32} className="text-purple-500 mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">Módulos</h3>
+          <p className="text-slate-400 text-sm">Gerencie categorias de vídeos.</p>
+        </Link>
+        <Link href="/admin/avisos" className="p-6 rounded-3xl bg-pink-500/5 border border-pink-500/20 hover:bg-pink-500/10 transition-all group">
+          <Bell size={32} className="text-pink-500 mb-4" />
+          <h3 className="text-xl font-bold text-white mb-2">Mural de Avisos</h3>
+          <p className="text-slate-400 text-sm">Crie banners cinematográficos.</p>
         </Link>
       </div>
 

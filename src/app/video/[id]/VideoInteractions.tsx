@@ -34,7 +34,7 @@ export default function VideoInteractions({
       } catch (e) {
         console.error('Falha ao registrar view:', e);
       }
-    }, 5000); // 5 segundos como solicitado
+    }, 2000); // Reduzido para 2 segundos para melhor UX
 
     return () => clearTimeout(timer);
   }, [videoId]);
@@ -88,7 +88,7 @@ export default function VideoInteractions({
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: 'Martinez Videos',
+        title: 'Martinez & Carvalho',
         url: window.location.href,
       });
     } else {
@@ -163,7 +163,7 @@ export default function VideoInteractions({
               <div>
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="font-bold text-slate-200">{comment.usuario_nome || 'Usuário'}</span>
-                  <span className="text-xs text-slate-500">{new Date(comment.data).toLocaleDateString('pt-BR')}</span>
+                  <span className="text-xs text-slate-500" suppressHydrationWarning>{new Date(comment.data).toLocaleDateString('pt-BR')}</span>
                 </div>
                 <p className="text-slate-300 text-sm leading-relaxed">{comment.conteudo}</p>
               </div>

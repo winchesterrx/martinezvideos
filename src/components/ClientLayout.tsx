@@ -13,13 +13,13 @@ export default function ClientLayout({
   user: any;
   setores: any[];
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar 
         user={user} 
         setores={setores} 
@@ -27,10 +27,10 @@ export default function ClientLayout({
         closeSidebar={closeSidebar} 
       />
       
-      <div className="flex-1 flex flex-col relative z-0 min-w-0">
+      <div className={`flex-1 flex flex-col relative z-0 min-w-0 transition-all duration-300`}>
         <Navbar user={user} toggleSidebar={toggleSidebar} />
         
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto custom-scrollbar">
           {children}
         </main>
       </div>

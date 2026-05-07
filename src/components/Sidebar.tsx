@@ -55,15 +55,16 @@ export default function Sidebar({
 
       {/* Sidebar Desktop & Mobile */}
       <aside
-        className={`fixed md:static top-0 left-0 h-screen w-[280px] bg-slate-950/95 backdrop-blur-xl border-r border-white/5 z-50 flex flex-col transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`fixed md:relative top-0 left-0 h-screen bg-black/20 backdrop-blur-3xl border-r border-white/5 z-50 flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? 'w-[280px] opacity-100' : 'w-0 md:w-0 opacity-0 border-none'
         }`}
       >
-        <div className="p-6 h-16 flex items-center gap-3 text-orange-500 font-bold text-2xl border-b border-white/5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
-            <span className="text-sm">MV</span>
-          </div>
-          <span className="text-xl">Martinez</span>
+        <div className="p-6 h-16 flex items-center justify-start border-b border-white/5">
+          <img 
+            src="/logo.png" 
+            alt="Martinez & Carvalho" 
+            className="h-full w-auto object-contain max-h-10"
+          />
         </div>
 
         {/* Navigation */}

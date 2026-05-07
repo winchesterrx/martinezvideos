@@ -33,6 +33,29 @@ export async function initMasterLogs() {
       )
     `);
 
+
+    // Tabela de Configurações da Plataforma
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS plataforma_config (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        chave VARCHAR(100) UNIQUE NOT NULL,
+        valor TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Inserir configurações iniciais se não existirem
+    const initialConfigs = [
+      { chave: 'home_hero_video_id', valor: '' },
+      { chave: 'home_hero_titulo', valor: 'Bem-vindo ao Futuro do Aprendizado' },
+      { chave: 'home_hero_subtitulo', valor: 'Explore nossa biblioteca de vídeos premium e acelere sua carreira.' },
+    ];
+
+    for (const conf of initialConfigs) {
+      await pool.query('INSERT IGNORE INTO plataforma_config (chave, valor) VALUES (?, ?)', [conf.chave, conf.valor]);
+    }
+
+
     // Sincroniza a coluna video_id se não existir
     try {
       await pool.query(`ALTER TABLE transmissao_ao_vivo ADD COLUMN video_id VARCHAR(50) NULL AFTER url`);

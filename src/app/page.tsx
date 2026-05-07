@@ -1,6 +1,13 @@
 import { getDbConnection } from '@/lib/db';
-import { PlayCircle, Video, TrendingUp, Bell, Sparkles, Folder, Compass } from 'lucide-react';
-import Link from 'next/link';
+import { getSession } from '@/lib/auth';
+import { TrendingUp, Sparkles, Folder } from 'lucide-react';
+import SearchBar from '@/components/SearchBar';
+import Hero from '@/components/Hero';
+import ContinueCard from '@/components/ContinueCard';
+import NoticeCard from '@/components/NoticeCard';
+import TrailCard from '@/components/TrailCard';
+import VideoCard from '@/components/VideoCard';
+import SystemCard from '@/components/SystemCard';
 
 // Componente para evitar erros de renderização em datas se houver problemas de timezone
 function formatDate(dateString: string) {
@@ -12,6 +19,7 @@ function formatDate(dateString: string) {
 }
 
 export default async function DashboardPage() {
+  const session = await getSession();
   const pool = await getDbConnection();
   
   // 1. Buscar Live Ao Vivo
@@ -34,90 +42,54 @@ export default async function DashboardPage() {
   const [setores] = await pool.query('SELECT * FROM setores WHERE ativo = "S" ORDER BY nome ASC');
   const sistemas = setores as any[];
 
-  const getPreviewSource = (url: string, thumbnail: string | null) => {
-    if (thumbnail) return { type: 'image', src: thumbnail };
-    if (!url) return null;
-    
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      const id = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11}).*/)?.[1];
-      return { type: 'image', src: `https://img.youtube.com/vi/${id}/mqdefault.jpg` };
-    }
-    
-    if (url.includes('drive.google.com')) {
-      const id = url.match(/(?:id=|\/d\/)([0-9A-Za-z_-]{25,})/)?.[1];
-      return { type: 'image', src: `https://drive.google.com/thumbnail?id=${id}&sz=w800` };
-    }
-    
-    if (url.includes('/uploads/')) {
-      return { type: 'video', src: url };
-    }
-    
-    return null;
-  };
+  // 6. Configurações da Plataforma (Home Personalizada)
+  const [configs] = await pool.query('SELECT chave, valor FROM plataforma_config');
+  const config = (configs as any[]).reduce((acc, curr) => {
+    acc[curr.chave] = curr.valor;
+    return acc;
+  }, {});
+
+  // 7. Buscar Último Vídeo Assistido (Continuidade)
+  let ultimoVideo = null;
+  if (session) {
+    const [history] = await pool.query(`
+      SELECT v.*, h.visualizado_em 
+      FROM usuario_historico h
+      JOIN videos v ON h.video_id = v.id
+      WHERE h.usuario_id = ?
+      ORDER BY h.visualizado_em DESC
+      LIMIT 1
+    `, [session.id]);
+    ultimoVideo = (history as any[])[0] || null;
+  }
 
   return (
-    <div className="min-h-[200vh] bg-slate-950 text-white pb-24">
-      {/* Background Mask */}
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-fixed bg-center opacity-5 pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/90 to-slate-950 pointer-events-none z-0" />
-
-      <div className="relative z-10 px-4 md:px-8 py-8 max-w-7xl mx-auto space-y-12">
+    <div className="min-h-screen text-white pb-24 relative overflow-x-hidden">
+      <div className="relative z-10 px-4 md:px-8 py-8 max-w-6xl mx-auto space-y-12">
         
-        {/* HERO SECTION - LIVE */}
-        {liveAtiva ? (
-          <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-orange-500/30 shadow-[0_0_40px_rgba(249,115,22,0.15)] group">
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-transparent z-10" />
-            {liveAtiva.url && liveAtiva.url.includes('youtube') && (
-               <img src={`https://img.youtube.com/vi/${liveAtiva.url.split('v=')[1]}/maxresdefault.jpg`} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700" alt="Live Background" />
-            )}
-            <div className="relative z-20 p-8 md:p-12 md:w-2/3">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </span>
-                <span className="text-red-500 font-bold uppercase tracking-widest text-sm">Ao Vivo Agora</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight">{liveAtiva.titulo}</h1>
-              <p className="text-lg text-slate-300 mb-8 max-w-xl leading-relaxed">{liveAtiva.descricao || 'Acompanhe nossa transmissão exclusiva ao vivo na plataforma.'}</p>
-              <Link href="/live" className="inline-flex items-center gap-3 px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-lg shadow-orange-500/25">
-                <PlayCircle className="w-6 h-6" />
-                Acessar Transmissão
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-white/5 group">
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-transparent z-10" />
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop')] bg-cover opacity-20 group-hover:scale-105 transition-transform duration-700" />
-            <div className="relative z-20 p-8 md:p-12 md:w-2/3">
-              <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight">Conhecimento<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Sem Limites.</span></h1>
-              <p className="text-lg text-slate-300 mb-8 max-w-xl leading-relaxed">Continue sua trilha de desenvolvimento. Explore módulos, assista a novas aulas e expanda suas habilidades agora mesmo.</p>
-              <Link href="#recentes" className="inline-flex items-center gap-3 px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-medium rounded-xl transition-colors border border-white/10">
-                <Compass className="w-5 h-5" />
-                Explorar Conteúdos
-              </Link>
-            </div>
-          </div>
-        )}
+        {/* BUSCA INTELIGENTE (COMMAND PALETTE) */}
+        <SearchBar />
 
-        {/* MURAL DE NOTÍCIAS */}
+        {/* HERO SECTION - LIVE OU CONFIGURADO */}
+        <Hero live={liveAtiva} config={config} />
+
+        {/* SEÇÃO DE CONTINUIDADE (CÉREBRO) */}
+        {ultimoVideo && <ContinueCard video={ultimoVideo} />}
+
+        {/* MURAL DE NOTÍCIAS CINEMATOGRÁFICO */}
         {noticias.length > 0 && (
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <Bell className="w-6 h-6 text-orange-500" />
-              <h2 className="text-2xl font-bold text-white">Mural de Avisos</h2>
+          <section className="space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-1.5 h-10 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full shadow-[0_0_15px_rgba(249,115,22,0.4)]" />
+              <div>
+                 <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none" style={{ fontFamily: "'Outfit', sans-serif" }}>Mural de Avisos</h2>
+                 <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Fique por dentro das novidades</p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {noticias.map((noticia) => (
-                <div key={noticia.id} className="bg-slate-900/50 backdrop-blur-sm border border-white/5 rounded-2xl p-5 hover:bg-slate-800/50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-md">{noticia.tipo || 'Aviso'}</span>
-                    <span className="text-xs text-slate-500">{formatDate(noticia.created_at)}</span>
-                  </div>
-                  <h3 className="text-base font-bold text-slate-200 mb-2">{noticia.titulo}</h3>
-                  <p className="text-sm text-slate-400 line-clamp-2">{noticia.mensagem}</p>
-                </div>
+                <NoticeCard key={noticia.id} noticia={noticia} formatDate={formatDate} />
               ))}
             </div>
           </section>
@@ -128,30 +100,12 @@ export default async function DashboardPage() {
           <section>
             <div className="flex items-center gap-3 mb-6">
               <TrendingUp className="w-6 h-6 text-orange-500" />
-              <h2 className="text-2xl font-bold text-white">Trilhas Recomendadas</h2>
+              <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>Trilhas Recomendadas</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {trilhas.map((trilha) => {
-                const preview = getPreviewSource(trilha.url_video, trilha.thumbnail);
-                return (
-                  <Link key={trilha.id} href={`/video/${trilha.id}`} className="group block relative rounded-2xl overflow-hidden aspect-video bg-slate-900 border border-white/5">
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent z-10" />
-                    {preview?.type === 'image' ? (
-                       <img src={preview.src} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" alt="" />
-                    ) : preview?.type === 'video' ? (
-                       <video src={preview.src} muted loop autoPlay className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                       <div className="absolute inset-0 w-full h-full bg-slate-900 flex items-center justify-center">
-                          <Video className="text-slate-800" size={32} />
-                       </div>
-                    )}
-                    <div className="absolute inset-0 z-20 p-4 flex flex-col justify-end">
-                       <span className="text-xs font-bold text-orange-400 mb-1 uppercase tracking-tighter">TRILHA DE APRENDIZADO</span>
-                       <h3 className="text-sm font-bold text-white line-clamp-2">{trilha.titulo}</h3>
-                    </div>
-                  </Link>
-                );
-              })}
+              {trilhas.map((trilha) => (
+                <TrailCard key={trilha.id} trilha={trilha} />
+              ))}
             </div>
           </section>
         )}
@@ -160,51 +114,24 @@ export default async function DashboardPage() {
         <section id="recentes">
           <div className="flex items-center gap-3 mb-6">
             <Sparkles className="w-6 h-6 text-orange-500" />
-            <h2 className="text-2xl font-bold text-white">Adicionados Recentemente</h2>
+            <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>Adicionados Recentemente</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-            {videosRecentes.map((video) => {
-              const preview = getPreviewSource(video.url_video, video.thumbnail);
-              return (
-                <Link key={video.id} href={`/video/${video.id}`} className="group bg-slate-900/40 rounded-xl border border-white/5 overflow-hidden hover:border-orange-500/30 transition-colors">
-                  <div className="aspect-video bg-slate-800 relative overflow-hidden">
-                    {preview?.type === 'image' ? (
-                       <img src={preview.src} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={video.titulo} />
-                    ) : preview?.type === 'video' ? (
-                       <video src={preview.src} muted loop autoPlay className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                       <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                         <Video className="w-8 h-8 text-slate-600" />
-                       </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-slate-200 line-clamp-2 group-hover:text-orange-400 transition-colors">{video.titulo}</h3>
-                    <p className="text-[10px] font-bold text-slate-500 mt-2 line-clamp-1 uppercase tracking-widest">{video.setor || 'Geral'}</p>
-                  </div>
-                </Link>
-              );
-            })}
+            {videosRecentes.map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))}
           </div>
         </section>
 
         {/* NOSSOS SISTEMAS - PRATELEIRA SECUNDÁRIA */}
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Folder className="w-6 h-6 text-orange-500" />
-              <h2 className="text-2xl font-bold text-white">Explorar por Sistemas</h2>
-            </div>
+          <div className="flex items-center gap-3 mb-6">
+            <Folder className="w-6 h-6 text-orange-500" />
+            <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Outfit', sans-serif" }}>Explorar por Sistemas</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {sistemas.map((sistema) => (
-              <Link key={sistema.id} href={`/sistema/${sistema.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-white/5 hover:bg-slate-800 hover:border-orange-500/30 transition-all group">
-                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
-                  <Folder className="w-4 h-4 text-slate-400 group-hover:text-orange-500" />
-                </div>
-                <span className="text-sm font-medium text-slate-300 group-hover:text-white truncate">{sistema.nome}</span>
-              </Link>
+              <SystemCard key={sistema.id} sistema={sistema} />
             ))}
           </div>
         </section>

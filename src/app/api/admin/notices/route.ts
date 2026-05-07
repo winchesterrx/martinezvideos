@@ -10,15 +10,10 @@ export async function GET() {
 
   try {
     const pool = await getDbConnection();
-    const [rows] = await pool.query(`
-      SELECT m.*, s.nome as setor_nome 
-      FROM modulos m 
-      JOIN setores s ON m.setor_id = s.id 
-      ORDER BY s.nome, m.nome
-    `);
-    return NextResponse.json({ modules: rows });
+    const [rows] = await pool.query('SELECT * FROM notificacoes ORDER BY created_at DESC');
+    return NextResponse.json({ notices: rows });
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao buscar módulos' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao buscar avisos' }, { status: 500 });
   }
 }
 
@@ -29,17 +24,20 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { nome, setor_id, descricao, icone, cor, ativo } = await request.json();
-    if (!nome || !setor_id) return NextResponse.json({ error: 'Nome e Sistema são obrigatórios' }, { status: 400 });
+    const { tipo, titulo, mensagem, link, video_id, imagem_fundo } = await request.json();
+
+    if (!tipo || !titulo) {
+      return NextResponse.json({ error: 'Tipo e Título são obrigatórios' }, { status: 400 });
+    }
 
     const pool = await getDbConnection();
     const [result]: any = await pool.execute(
-      'INSERT INTO modulos (nome, setor_id, descricao, icone, cor, ativo) VALUES (?, ?, ?, ?, ?, ?)',
-      [nome, setor_id, descricao || '', icone || 'fas fa-cube', cor || '#6366f1', ativo || 'S']
+      'INSERT INTO notificacoes (tipo, titulo, mensagem, link, video_id, imagem_fundo, lida) VALUES (?, ?, ?, ?, ?, ?, "N")',
+      [tipo, titulo, mensagem || '', link || '', video_id || null, imagem_fundo || '']
     );
 
     return NextResponse.json({ success: true, id: result.insertId });
   } catch (error) {
-    return NextResponse.json({ error: 'Erro ao criar módulo' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao criar aviso' }, { status: 500 });
   }
 }

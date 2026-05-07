@@ -16,13 +16,13 @@ export default function Navbar({ user, toggleSidebar }: { user: any, toggleSideb
   };
 
   return (
-    <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
+    <header className="h-16 bg-slate-950/40 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
       
       {/* Esquerda: Botão Menu Mobile */}
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
-          className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+          className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
         >
           <Menu className="w-6 h-6" />
         </button>

@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 import ClientLayout from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
-  title: "Martinez Videos - Premium Learning",
+  title: "Martinez & Carvalho - Premium Learning",
   description: "Plataforma de ensino inteligente e premium.",
 };
 
@@ -19,6 +19,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Garantir que as tabelas mestras existam
+  const { initMasterLogs } = await import("@/lib/db-init");
+  await initMasterLogs();
+
   const session = await getSession();
   
   let setores = [];
@@ -40,7 +44,7 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR" className="dark">
-      <body className={`${inter.className} bg-slate-950 text-slate-200 antialiased min-h-screen`}>
+      <body className={`${inter.className} text-slate-200 antialiased min-h-screen`}>
         {session && !isLoginPage ? (
           <ClientLayout user={session} setores={setores}>
             {children}

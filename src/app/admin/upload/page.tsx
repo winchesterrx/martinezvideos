@@ -95,6 +95,7 @@ export default function AdminUploadPage() {
             modulo_id: '',
             is_sequencia: false,
             sequencia_id: '',
+            nova_trilha_nome: '',
             sequencia_ordem: '1'
           });
           setFile(null);
@@ -174,7 +175,7 @@ export default function AdminUploadPage() {
                   <input 
                     required
                     type="text" 
-                    value={form.titulo || ''}
+                    value={form.titulo ?? ''}
                     onChange={e => setForm(prev => ({...prev, titulo: e.target.value}))}
                     className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-orange-500 outline-none transition-all"
                     placeholder="Defina um título claro e direto..."
@@ -186,7 +187,7 @@ export default function AdminUploadPage() {
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Setor (Sistema)</label>
                     <select 
                       required
-                      value={form.setor_id || ''}
+                      value={form.setor_id ?? ''}
                       onChange={e => setForm(prev => ({...prev, setor_id: e.target.value, modulo_id: ''}))}
                       className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-orange-500 outline-none appearance-none"
                     >
@@ -199,7 +200,7 @@ export default function AdminUploadPage() {
                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Módulo</label>
                     <select 
                       required
-                      value={form.modulo_id || ''}
+                      value={form.modulo_id ?? ''}
                       onChange={e => setForm(prev => ({...prev, modulo_id: e.target.value}))}
                       className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-orange-500 outline-none appearance-none disabled:opacity-30"
                       disabled={!form.setor_id}
@@ -216,7 +217,7 @@ export default function AdminUploadPage() {
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Descrição</label>
                   <textarea 
                     rows={4}
-                    value={form.descricao || ''}
+                    value={form.descricao ?? ''}
                     onChange={e => setForm(prev => ({...prev, descricao: e.target.value}))}
                     className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-orange-500 outline-none transition-all resize-none text-sm"
                     placeholder="O que o aluno vai aprender nesta aula?"
@@ -267,13 +268,14 @@ export default function AdminUploadPage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
+                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Link Direto</label>
                   <div className="relative">
                     <input 
+                      key={`url-${form.tipo_fonte}`} // Evita conflito entre YouTube/Drive
                       required
                       type="text" 
-                      value={form.url || ''}
+                      value={form.url ?? ''}
                       onChange={e => setForm(prev => ({...prev, url: e.target.value}))}
                       className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-orange-500 outline-none transition-all pl-12"
                       placeholder={form.tipo_fonte === 'youtube' ? 'URL do YouTube...' : 'Link do Google Drive...'}
@@ -308,7 +310,7 @@ export default function AdminUploadPage() {
                    <div className="space-y-2">
                       <label className="text-[10px] text-slate-600 font-black uppercase">Selecionar Sequência Existente</label>
                       <select 
-                        value={form.sequencia_id || ''}
+                        value={form.sequencia_id ?? ''}
                         onChange={e => setForm(prev => ({...prev, sequencia_id: e.target.value, nova_trilha_nome: ''}))}
                         className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none appearance-none"
                       >
@@ -323,8 +325,9 @@ export default function AdminUploadPage() {
                      <div className="space-y-2">
                         <label className="text-[10px] text-slate-600 font-black uppercase">Nome da Nova Sequência</label>
                         <input 
+                          key="nova_trilha"
                           type="text" 
-                          value={form.nova_trilha_nome || ''}
+                          value={form.nova_trilha_nome ?? ''}
                           onChange={e => setForm(prev => ({...prev, nova_trilha_nome: e.target.value}))}
                           className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                           placeholder="Ex: Fluxo de Atendimento"
@@ -336,7 +339,7 @@ export default function AdminUploadPage() {
                       <label className="text-[10px] text-slate-600 font-black uppercase">Ordem de Exibição</label>
                       <input 
                         type="number" 
-                        value={form.sequencia_ordem || ''}
+                        value={form.sequencia_ordem ?? ''}
                         onChange={e => setForm(prev => ({...prev, sequencia_ordem: e.target.value}))}
                         className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                       />

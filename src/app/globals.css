@@ -1,10 +1,64 @@
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=Outfit:wght@700;900&display=swap";
+
 @import "tailwindcss";
+
+
+@layer utilities {
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0) 35%,
+      rgba(255, 255, 255, 0.03) 50%,
+      rgba(255, 255, 255, 0) 65%,
+      transparent 100%
+    );
+    transform: rotate(25deg);
+    animation: shimmer 5s infinite linear;
+    pointer-events: none;
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-50%) rotate(25deg); }
+  100% { transform: translateX(100%) rotate(25deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes zoom-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-zoom-in {
+  animation: zoom-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
 :root {
   --background: #020617;
   --foreground: #f8fafc;
   --primary: #f97316;
   --primary-foreground: #ffffff;
+  font-family: 'Inter', sans-serif;
 }
 
 @theme inline {
@@ -12,8 +66,28 @@
   --color-foreground: var(--foreground);
 }
 
+html {
+  /* Fundo Soberano e Premium — Escuro e Texturizado */
+  background-color: #020617;
+  background-image: 
+    url('https://www.transparenttextures.com/patterns/carbon-fibre.png'),
+    linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  background-attachment: fixed;
+}
+
+html::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  /* Máscara de vinheta profunda */
+  background: radial-gradient(circle at center, transparent 0%, rgba(2, 6, 23, 0.8) 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
 body {
-  background: var(--background);
+  position: relative;
+  z-index: 1;
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

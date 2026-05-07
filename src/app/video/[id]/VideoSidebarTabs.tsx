@@ -169,10 +169,10 @@ export default function VideoSidebarTabs({
                            <h4 className="text-[12px] font-bold text-slate-200 line-clamp-2 leading-tight group-hover:text-orange-500 transition-colors">
                              {s.titulo}
                            </h4>
-                           <p className="text-[9px] text-slate-500 font-black uppercase mt-1.5 flex items-center gap-2">
+                           <div className="text-[9px] text-slate-500 font-black uppercase mt-1.5 flex items-center gap-2">
                               <div className="w-1 h-1 rounded-full bg-slate-700" />
                               {s.visualizacoes || 0} views
-                           </p>
+                           </div>
                         </div>
                       </Link>
                     );

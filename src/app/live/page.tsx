@@ -91,7 +91,7 @@ export default async function LivePage() {
             <span className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500 rounded-md text-[10px] font-black text-white uppercase tracking-tighter">
               AO VIVO
             </span>
-            <span className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">Masterclass Martinez</span>
+            <span className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">Masterclass M&C</span>
           </div>
           <h1 className="text-xl md:text-3xl font-black text-white leading-none">{live.titulo}</h1>
         </div>
