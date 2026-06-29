@@ -9,12 +9,14 @@ export default function VideoSidebarTabs({
   video, 
   trilha, 
   sequencia_titulo,
-  sugestoes
+  sugestoes,
+  isLoggedIn
 }: { 
   video: any, 
   trilha: any[], 
   sequencia_titulo: string,
-  sugestoes: any[]
+  sugestoes: any[],
+  isLoggedIn: boolean
 }) {
   const hasTrilha = trilha.length > 0;
   const [activeTab, setActiveTab] = useState<'conteudo' | 'ai'>('conteudo');
@@ -190,7 +192,7 @@ export default function VideoSidebarTabs({
               <p className="text-[11px] text-slate-400 mt-1">O tutor tem acesso ao conteúdo desta aula para tirar suas dúvidas.</p>
             </div>
             <div className="flex-1">
-              <AIChatClient videoContext={video} />
+              <AIChatClient videoContext={video} isLoggedIn={isLoggedIn} />
             </div>
           </div>
         )}

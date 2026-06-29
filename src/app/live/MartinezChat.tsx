@@ -11,7 +11,7 @@ interface Message {
   timestamp: string;
 }
 
-export default function MartinezChat({ videoId }: { videoId: string }) {
+export default function MartinezChat({ videoId, isLoggedIn }: { videoId: string, isLoggedIn: boolean }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome-1',
@@ -211,10 +211,22 @@ export default function MartinezChat({ videoId }: { videoId: string }) {
           <div className="relative group">
             <input
               type="text"
-              placeholder="Diga algo no chat..."
+              placeholder={isLoggedIn ? "Diga algo no chat..." : "Faça login para interagir..."}
+              onFocus={() => {
+                if (!isLoggedIn) {
+                  window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                }
+              }}
               className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm text-white focus:border-orange-500 transition-all outline-none"
             />
-            <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-orange-500 transition-colors">
+            <button 
+              onClick={() => {
+                if (!isLoggedIn) {
+                  window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                }
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-orange-500 transition-colors"
+            >
               <Send size={18} />
             </button>
           </div>

@@ -10,7 +10,7 @@ type Message = {
   content: string;
 };
 
-export default function AIChatClient({ videoContext }: { videoContext: any }) {
+export default function AIChatClient({ videoContext, isLoggedIn }: { videoContext: any, isLoggedIn: boolean }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -32,6 +32,10 @@ export default function AIChatClient({ videoContext }: { videoContext: any }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
     if (!input.trim() || isLoading) return;
 
     const userMsg = input.trim();
@@ -101,13 +105,18 @@ export default function AIChatClient({ videoContext }: { videoContext: any }) {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Digite sua dúvida..."
+            placeholder={isLoggedIn ? "Digite sua dúvida..." : "Faça login para perguntar..."}
+            onFocus={() => {
+              if (!isLoggedIn) {
+                window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+              }
+            }}
             className="w-full bg-slate-900 border border-white/10 rounded-full py-3 pl-4 pr-12 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
             disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!isLoggedIn ? false : (!input.trim() || isLoading)}
             className="absolute right-2 p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Send size={16} />

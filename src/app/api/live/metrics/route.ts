@@ -27,6 +27,11 @@ async function getDetailedGeoLocation(ip: string) {
 export async function POST(request: Request) {
   try {
     const { videoId, videoUrl, type, userId, userName: providedUserName } = await request.json();
+
+    if ((type === 'like' || type === 'notify') && !userId) {
+      return NextResponse.json({ error: 'Você precisa estar logado para realizar esta ação.' }, { status: 401 });
+    }
+
     const pool = await getDbConnection();
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
     const userAgent = request.headers.get('user-agent') || 'Desconhecido';

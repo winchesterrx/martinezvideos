@@ -126,13 +126,23 @@ export default function Sidebar({
               Administração
             </Link>
           )}
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all text-sm font-medium"
-          >
-            <LogOut size={18} />
-            Sair da Plataforma
-          </button>
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all text-sm font-medium"
+            >
+              <LogOut size={18} />
+              Sair da Plataforma
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-orange-400 hover:bg-orange-500/10 transition-all text-sm font-medium"
+            >
+              <User size={18} />
+              Entrar na Plataforma
+            </Link>
+          )}
         </div>
       </aside>
     </>

@@ -151,6 +151,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
             initialLikes={video.curtidas || 0}
             hasLikedInitially={hasLiked}
             initialComments={comentarios}
+            isLoggedIn={!!session}
           />
         </div>
       </div>
@@ -161,6 +162,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
         trilha={trilha}
         sequencia_titulo={sequencia_titulo}
         sugestoes={sugestoes}
+        isLoggedIn={!!session}
       />
     </div>
   );

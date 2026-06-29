@@ -20,7 +20,7 @@ function formatTimeAgo(dateString: string) {
 export default async function HistoryPage() {
   const session = await getSession();
   
-  if (!session) redirect('/auth/login');
+  if (!session) redirect('/login?redirect=/historico');
 
   const pool = await getDbConnection();
   

@@ -126,7 +126,7 @@ export default async function LivePage() {
         {/* Lado Direito: Chat + Recomendações */}
         <div className="lg:col-span-1 flex flex-col gap-6">
            <div className="h-[450px] lg:h-[500px] flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-slate-900/30 backdrop-blur-3xl shadow-xl">
-             {videoId && <MartinezChat videoId={videoId} />}
+             {videoId && <MartinezChat videoId={videoId} isLoggedIn={!!session} />}
            </div>
 
            {/* Recomendações Minimalistas */}

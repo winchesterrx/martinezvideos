@@ -12,7 +12,18 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set('x-pathname', pathname);
   requestHeaders.set('x-url', request.url);
 
-  if (publicRoutes.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/favicon.ico')) {
+  const isPublicRoute = 
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/live' ||
+    pathname.startsWith('/video/') ||
+    pathname.startsWith('/sistema/') ||
+    pathname.startsWith('/modulo/') ||
+    pathname.startsWith('/busca') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon.ico');
+
+  if (isPublicRoute) {
     return NextResponse.next({
       request: { headers: requestHeaders }
     });
@@ -21,7 +32,7 @@ export async function proxy(request: NextRequest) {
   const session = await getSession();
 
   if (!session) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url));
   }
 
   return NextResponse.next({

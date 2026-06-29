@@ -44,16 +44,28 @@ export default function Navbar({ user, toggleSidebar }: { user: any, toggleSideb
 
       {/* Direita: Perfil e Notificações */}
       <div className="flex items-center gap-3">
-        <NotificationCenter />
+        {user && <NotificationCenter />}
         
         <div className="flex items-center gap-2 pl-2 border-l border-white/10 ml-2">
-          <div className="hidden md:block text-right">
-            <p className="text-sm font-medium text-slate-200 leading-none">{user.nome}</p>
-            <p className="text-xs text-slate-500 mt-1">{user.cargo || 'Aluno'}</p>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-500 to-orange-700 flex items-center justify-center text-white shadow-lg">
-            <UserCircle className="w-6 h-6" />
-          </div>
+          {user ? (
+            <>
+              <div className="hidden md:block text-right">
+                <p className="text-sm font-medium text-slate-200 leading-none">{user.nome}</p>
+                <p className="text-xs text-slate-500 mt-1">{user.cargo || 'Aluno'}</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-500 to-orange-700 flex items-center justify-center text-white shadow-lg">
+                <UserCircle className="w-6 h-6" />
+              </div>
+            </>
+          ) : (
+            <Link 
+              href="/login" 
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white text-sm font-bold shadow-lg transition-all"
+            >
+              <UserCircle className="w-5 h-5" />
+              <span>Entrar</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>

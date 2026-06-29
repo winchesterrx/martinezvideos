@@ -38,7 +38,9 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/');
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect') || '/';
+        router.push(redirectUrl);
         router.refresh();
       } else {
         setError(data.error || 'Erro ao realizar login');

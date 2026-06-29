@@ -26,16 +26,14 @@ export default async function RootLayout({
   const session = await getSession();
   
   let setores = [];
-  if (session) {
-    try {
-      const { getDbConnection } = await import("@/lib/db");
-      const pool = await getDbConnection();
-      const [rows] = await pool.query('SELECT id, nome FROM setores WHERE ativo = "S" ORDER BY nome ASC');
-      setores = rows as any[];
-    } catch (error) {
-      console.error('Falha ao carregar setores (Banco offline):', error);
-      setores = [];
-    }
+  try {
+    const { getDbConnection } = await import("@/lib/db");
+    const pool = await getDbConnection();
+    const [rows] = await pool.query('SELECT id, nome FROM setores WHERE ativo = "S" ORDER BY nome ASC');
+    setores = rows as any[];
+  } catch (error) {
+    console.error('Falha ao carregar setores (Banco offline):', error);
+    setores = [];
   }
 
   const headerList = await headers();
@@ -45,7 +43,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR" className="dark">
       <body className={`${inter.className} text-slate-200 antialiased min-h-screen`}>
-        {session && !isLoginPage ? (
+        {!isLoginPage ? (
           <ClientLayout user={session} setores={setores}>
             {children}
           </ClientLayout>

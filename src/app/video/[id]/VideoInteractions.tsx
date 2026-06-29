@@ -7,12 +7,14 @@ export default function VideoInteractions({
   videoId, 
   initialLikes, 
   hasLikedInitially,
-  initialComments 
+  initialComments,
+  isLoggedIn
 }: { 
   videoId: string, 
   initialLikes: number,
   hasLikedInitially: boolean,
-  initialComments: any[]
+  initialComments: any[],
+  isLoggedIn: boolean
 }) {
   const [likes, setLikes] = useState(initialLikes);
   const [isLiked, setIsLiked] = useState(hasLikedInitially);
@@ -40,6 +42,10 @@ export default function VideoInteractions({
   }, [videoId]);
 
   const handleLike = async () => {
+    if (!isLoggedIn) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
     if (isLiking) return;
     setIsLiking(true);
     
@@ -64,6 +70,10 @@ export default function VideoInteractions({
 
   const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isLoggedIn) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
     if (!newComment.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -141,12 +151,17 @@ export default function VideoInteractions({
               type="text" 
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Adicione um comentário..."
+              placeholder={isLoggedIn ? "Adicione um comentário..." : "Faça login para comentar..."}
+              onFocus={() => {
+                if (!isLoggedIn) {
+                  window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                }
+              }}
               className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-slate-200 focus:outline-none focus:border-orange-500/50 pr-12"
             />
             <button 
               type="submit" 
-              disabled={isSubmitting || !newComment.trim()}
+              disabled={isSubmitting || (!isLoggedIn ? false : !newComment.trim())}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-orange-500 hover:text-orange-400 disabled:opacity-50 transition-colors"
             >
               <Send className="w-5 h-5" />

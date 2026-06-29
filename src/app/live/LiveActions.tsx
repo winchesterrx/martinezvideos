@@ -38,6 +38,10 @@ export default function LiveActions({ videoId, youtubeStats, userId, userName }:
 
   const handleLike = async () => {
     if (!videoId) return;
+    if (!userId) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
 
     try {
       const origin = window.location.origin;
@@ -84,6 +88,10 @@ export default function LiveActions({ videoId, youtubeStats, userId, userName }:
   };
 
   const handleNotify = async () => {
+    if (!userId) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
     const nextState = !notified;
     setNotified(nextState);
 
